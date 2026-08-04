@@ -46,6 +46,7 @@ export function AppSidebar({ children, className }) {
 
   return (
     <aside
+      data-slot="sidebar"
       data-collapsed={collapsed ? 'true' : 'false'}
       className={cn(
         'sticky top-0 hidden h-svh shrink-0 border-r border-sidebar-border bg-sidebar text-sidebar-foreground transition-[width] duration-200 md:flex md:flex-col',

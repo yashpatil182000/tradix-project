@@ -8,6 +8,9 @@ export const chartColors = {
   loss: 'var(--chart-loss)',
   drawdown: 'var(--chart-drawdown)',
   analytics: 'var(--chart-analytics)',
+  grid: 'var(--chart-grid)',
+  axis: 'var(--chart-axis)',
+  tooltip: 'var(--chart-tooltip)',
 }
 
 export const statusColors = {
