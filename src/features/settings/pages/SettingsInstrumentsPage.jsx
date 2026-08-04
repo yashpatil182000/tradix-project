@@ -1,31 +1,72 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { CreateInstrumentDialog } from '@/features/instruments/components/CreateInstrumentDialog'
 import { DeleteInstrumentDialog } from '@/features/instruments/components/DeleteInstrumentDialog'
 import { EditInstrumentDialog } from '@/features/instruments/components/EditInstrumentDialog'
 import { InstrumentList } from '@/features/instruments/components/InstrumentList'
 import { useInstruments } from '@/features/instruments/hooks/useInstruments'
+import {
+  ConfigPagination,
+  ConfigToolbar,
+} from '@/features/settings/components/ConfigToolbar'
+import { CONFIG_PAGE_SIZE } from '@/features/settings/constants/configCategories'
 
-export function InstrumentsPage() {
+export function SettingsInstrumentsPage() {
   const { data: instruments = [], isLoading, isError, error, refetch } =
     useInstruments()
+  const [search, setSearch] = useState('')
+  const [page, setPage] = useState(1)
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [editingInstrument, setEditingInstrument] = useState(null)
   const [deletingInstrument, setDeletingInstrument] = useState(null)
 
+  const filteredInstruments = useMemo(() => {
+    const query = search.trim().toLowerCase()
+    if (!query) return instruments
+
+    return instruments.filter((instrument) => {
+      const haystack = [
+        instrument.symbol,
+        instrument.name,
+        instrument.type,
+        instrument.exchange,
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase()
+
+      return haystack.includes(query)
+    })
+  }, [instruments, search])
+
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredInstruments.length / CONFIG_PAGE_SIZE),
+  )
+  const currentPage = Math.min(page, totalPages)
+  const paginatedInstruments = filteredInstruments.slice(
+    (currentPage - 1) * CONFIG_PAGE_SIZE,
+    currentPage * CONFIG_PAGE_SIZE,
+  )
+
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6">
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="text-heading-2">Instruments</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Manage the markets and symbols you trade.
-          </p>
-        </div>
-        <Button type="button" onClick={() => setIsCreateOpen(true)}>
-          Create instrument
-        </Button>
+    <div>
+      <div className="mb-6">
+        <h1 className="text-heading-2">Instruments</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Manage the markets and symbols you trade.
+        </p>
       </div>
+
+      <ConfigToolbar
+        search={search}
+        onSearchChange={(value) => {
+          setSearch(value)
+          setPage(1)
+        }}
+        onCreate={() => setIsCreateOpen(true)}
+        createLabel="Create instrument"
+      />
 
       {isLoading ? (
         <div className="rounded-card border border-border px-4 py-12 text-center text-sm text-muted-foreground">
@@ -50,11 +91,18 @@ export function InstrumentsPage() {
       ) : null}
 
       {!isLoading && !isError ? (
-        <InstrumentList
-          instruments={instruments}
-          onEdit={setEditingInstrument}
-          onDelete={setDeletingInstrument}
-        />
+        <>
+          <InstrumentList
+            instruments={paginatedInstruments}
+            onEdit={setEditingInstrument}
+            onDelete={setDeletingInstrument}
+          />
+          <ConfigPagination
+            page={currentPage}
+            totalPages={totalPages}
+            onPageChange={setPage}
+          />
+        </>
       ) : null}
 
       <CreateInstrumentDialog

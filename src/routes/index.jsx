@@ -5,6 +5,9 @@ import { RegisterPage } from '@/features/auth/pages/RegisterPage'
 import { ResetPasswordPage } from '@/features/auth/pages/ResetPasswordPage'
 import { AuthHomePage } from '@/features/auth/pages/AuthHomePage'
 import { InstrumentsPage } from '@/features/instruments/pages/InstrumentsPage'
+import { ConfigCategoryPage } from '@/features/settings/pages/ConfigCategoryPage'
+import { SettingsInstrumentsPage } from '@/features/settings/pages/SettingsInstrumentsPage'
+import { SettingsLayout } from '@/features/settings/pages/SettingsLayout'
 import { AppLayout } from '@/layouts/AppLayout'
 import { AuthLayout } from '@/layouts/AuthLayout'
 import { ProtectedRoute } from '@/routes/ProtectedRoute'
@@ -37,7 +40,15 @@ export function AppRoutes() {
           <Route path={ROUTES.INSTRUMENTS} element={<InstrumentsPage />} />
           <Route path={ROUTES.TRADE_JOURNAL} element={<RoutePlaceholder />} />
           <Route path={ROUTES.ANALYTICS} element={<RoutePlaceholder />} />
-          <Route path={ROUTES.SETTINGS} element={<RoutePlaceholder />} />
+
+          <Route path={ROUTES.SETTINGS} element={<SettingsLayout />}>
+            <Route
+              index
+              element={<Navigate to="instruments" replace />}
+            />
+            <Route path="instruments" element={<SettingsInstrumentsPage />} />
+            <Route path=":categoryPath" element={<ConfigCategoryPage />} />
+          </Route>
         </Route>
       </Route>
 

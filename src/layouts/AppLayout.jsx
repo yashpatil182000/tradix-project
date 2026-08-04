@@ -16,6 +16,7 @@ import { cn } from '@/lib/utils'
 const navItems = [
   { to: ROUTES.DASHBOARD, label: 'Home' },
   { to: ROUTES.INSTRUMENTS, label: 'Instruments' },
+  { to: ROUTES.SETTINGS, label: 'Settings' },
 ]
 
 function SidebarNav() {
