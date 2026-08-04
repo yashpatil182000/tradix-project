@@ -1,7 +1,9 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter } from 'react-router-dom'
-import { Toaster } from 'sonner'
+import { TooltipProvider } from '@/components/ui/tooltip'
+import { Toaster } from '@/components/ui/sonner'
 import { UserProvider } from '@/context/UserContext'
+import { ThemeProvider } from '@/providers/theme-provider'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -15,13 +17,17 @@ const queryClient = new QueryClient({
 
 export function AppProviders({ children }) {
   return (
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <UserProvider>
-          {children}
-          <Toaster richColors position="top-right" />
-        </UserProvider>
-      </BrowserRouter>
-    </QueryClientProvider>
+    <ThemeProvider>
+      <QueryClientProvider client={queryClient}>
+        <BrowserRouter>
+          <UserProvider>
+            <TooltipProvider delayDuration={200}>
+              {children}
+              <Toaster position="top-right" richColors closeButton />
+            </TooltipProvider>
+          </UserProvider>
+        </BrowserRouter>
+      </QueryClientProvider>
+    </ThemeProvider>
   )
 }
