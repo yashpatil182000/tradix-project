@@ -4,6 +4,7 @@ export const ROUTES = {
   FORGOT_PASSWORD: '/forgot-password',
   RESET_PASSWORD: '/reset-password',
   DASHBOARD: '/dashboard',
+  CAPITAL: '/capital',
   INSTRUMENTS: '/instruments',
   TRADE_JOURNAL: '/trade-journal',
   ANALYTICS: '/analytics',

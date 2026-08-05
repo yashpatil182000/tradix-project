@@ -15,6 +15,7 @@ import { cn } from '@/lib/utils'
 
 const navItems = [
   { to: ROUTES.DASHBOARD, label: 'Home' },
+  { to: ROUTES.CAPITAL, label: 'Capital' },
   { to: ROUTES.INSTRUMENTS, label: 'Instruments' },
   { to: ROUTES.SETTINGS, label: 'Settings' },
 ]
