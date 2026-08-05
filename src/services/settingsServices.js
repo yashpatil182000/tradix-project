@@ -27,14 +27,25 @@ async function getAuthUser() {
 }
 
 async function ensureUserProfile(user) {
-  const { error } = await supabase.from('users').upsert(
-    {
-      id: user.id,
-      email: user.email,
-      full_name: user.user_metadata?.full_name ?? null,
-    },
-    { onConflict: 'id' },
-  )
+  const { data: existing, error: selectError } = await supabase
+    .from('users')
+    .select('id')
+    .eq('id', user.id)
+    .maybeSingle()
+
+  if (selectError) {
+    handleSupabaseError(selectError)
+  }
+
+  if (existing) {
+    return
+  }
+
+  const { error } = await supabase.from('users').insert({
+    id: user.id,
+    email: user.email,
+    full_name: user.user_metadata?.full_name ?? null,
+  })
 
   if (error) {
     handleSupabaseError(error)
