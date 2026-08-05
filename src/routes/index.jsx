@@ -6,6 +6,10 @@ import { ResetPasswordPage } from '@/features/auth/pages/ResetPasswordPage'
 import { AuthHomePage } from '@/features/auth/pages/AuthHomePage'
 import { CapitalPage } from '@/features/capital/pages/CapitalPage'
 import { InstrumentsPage } from '@/features/instruments/pages/InstrumentsPage'
+import { CreateTradePage } from '@/features/trades/pages/CreateTradePage'
+import { EditTradePage } from '@/features/trades/pages/EditTradePage'
+import { TradeDetailsPage } from '@/features/trades/pages/TradeDetailsPage'
+import { TradesPage } from '@/features/trades/pages/TradesPage'
 import { ConfigCategoryPage } from '@/features/settings/pages/ConfigCategoryPage'
 import { SettingsInstrumentsPage } from '@/features/settings/pages/SettingsInstrumentsPage'
 import { SettingsLayout } from '@/features/settings/pages/SettingsLayout'
@@ -40,7 +44,10 @@ export function AppRoutes() {
           <Route path={ROUTES.DASHBOARD} element={<AuthHomePage />} />
           <Route path={ROUTES.CAPITAL} element={<CapitalPage />} />
           <Route path={ROUTES.INSTRUMENTS} element={<InstrumentsPage />} />
-          <Route path={ROUTES.TRADE_JOURNAL} element={<RoutePlaceholder />} />
+          <Route path={ROUTES.TRADE_JOURNAL} element={<TradesPage />} />
+          <Route path={`${ROUTES.TRADE_JOURNAL}/new`} element={<CreateTradePage />} />
+          <Route path={`${ROUTES.TRADE_JOURNAL}/:tradeId`} element={<TradeDetailsPage />} />
+          <Route path={`${ROUTES.TRADE_JOURNAL}/:tradeId/edit`} element={<EditTradePage />} />
           <Route path={ROUTES.ANALYTICS} element={<RoutePlaceholder />} />
 
           <Route path={ROUTES.SETTINGS} element={<SettingsLayout />}>

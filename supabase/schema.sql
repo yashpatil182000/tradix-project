@@ -135,6 +135,16 @@ create table public.trades (
   setup text,
   notes text,
   emotions text,
+  style text,
+  risk_amount numeric(18, 2),
+  reward_amount numeric(18, 2),
+  capital_after numeric(18, 2),
+  entry_reason text,
+  exit_reason text,
+  timeframe text,
+  mistakes text,
+  followed_rules boolean,
+  lesson_learned text,
   rating smallint,
   entry_at timestamptz not null default timezone('utc', now()),
   exit_at timestamptz,
@@ -144,6 +154,7 @@ create table public.trades (
   constraint trades_quantity_positive check (quantity > 0),
   constraint trades_fees_non_negative check (fees >= 0),
   constraint trades_rating_range check (rating is null or (rating >= 1 and rating <= 5)),
+  constraint trades_style_check check (style is null or style in ('scalp', 'intraday', 'swing')),
   constraint trades_exit_requires_price check (
     status <> 'closed'
     or (exit_price is not null and exit_at is not null)

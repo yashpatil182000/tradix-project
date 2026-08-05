@@ -1,3 +1,4 @@
+import { toUtcIsoFromLocalInput } from '@/features/capital/utils/formatCapital'
 import { supabase, handleSupabaseError } from './api'
 
 export const ADJUSTMENT_OUT_PREFIX = '[OUT] '
@@ -179,7 +180,10 @@ export async function createCapitalEntry(payload) {
       amount: payload.amount,
       currency: payload.currency || 'USD',
       note,
-      recorded_at: payload.recorded_at || new Date().toISOString(),
+      recorded_at:
+        toUtcIsoFromLocalInput(payload.recorded_at) ||
+        payload.recorded_at ||
+        new Date().toISOString(),
     })
     .select('*')
     .single()
@@ -189,4 +193,49 @@ export async function createCapitalEntry(payload) {
   }
 
   return data
+}
+
+export const TRADE_CAPITAL_MARKER = '[TRADE:'
+
+export async function deleteCapitalEntry(id) {
+  const { error } = await supabase.from('capital').delete().eq('id', id)
+
+  if (error) {
+    handleSupabaseError(error)
+  }
+}
+
+export async function removeCapitalForTrade(tradeId) {
+  const entries = await getCapitalEntries()
+  const marker = `${TRADE_CAPITAL_MARKER}${tradeId}]`
+  const related = entries.filter((entry) => entry.note?.includes(marker))
+
+  await Promise.all(related.map((entry) => deleteCapitalEntry(entry.id)))
+}
+
+export async function syncCapitalForClosedTrade({
+  tradeId,
+  pnl,
+  recordedAt,
+  currency = 'USD',
+}) {
+  await removeCapitalForTrade(tradeId)
+
+  const amount = Math.abs(Number(pnl) || 0)
+  if (!amount) {
+    const entries = await getCapitalEntries()
+    return buildCapitalSummary(entries).currentCapital
+  }
+
+  await createCapitalEntry({
+    entry_type: 'adjustment',
+    amount,
+    direction: Number(pnl) >= 0 ? 'in' : 'out',
+    note: `${TRADE_CAPITAL_MARKER}${tradeId}] Closed trade P/L`,
+    recorded_at: recordedAt,
+    currency,
+  })
+
+  const entries = await getCapitalEntries()
+  return buildCapitalSummary(entries).currentCapital
 }

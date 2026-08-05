@@ -1,37 +1,37 @@
-import { useEffect } from 'react'
-import { Controller, useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { Button } from '@/components/ui/button'
+import { useEffect } from "react";
+import { Controller, useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
-import { Textarea } from '@/components/ui/textarea'
-import { useCreateCapitalEntry } from '@/features/capital/hooks/useCapital'
-import { capitalTransactionSchema } from '@/features/capital/schemas/capitalSchemas'
-import { toDateTimeLocalValue } from '@/features/capital/utils/formatCapital'
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { useCreateCapitalEntry } from "@/features/capital/hooks/useCapital";
+import { capitalTransactionSchema } from "@/features/capital/schemas/capitalSchemas";
+import { toDateTimeLocalValue } from "@/features/capital/utils/formatCapital";
 
 export function AddCapitalTransactionDialog({
   open,
   onOpenChange,
-  defaultType = 'deposit',
+  defaultType = "deposit",
   hasStartingCapital = false,
 }) {
-  const createEntry = useCreateCapitalEntry()
+  const createEntry = useCreateCapitalEntry();
   const resolvedDefaultType =
-    defaultType === 'starting' && hasStartingCapital ? 'deposit' : defaultType
+    defaultType === "starting" && hasStartingCapital ? "deposit" : defaultType;
 
   const {
     register,
@@ -44,28 +44,28 @@ export function AddCapitalTransactionDialog({
     resolver: zodResolver(capitalTransactionSchema),
     defaultValues: {
       entry_type: resolvedDefaultType,
-      amount: '',
+      amount: "",
       recorded_at: toDateTimeLocalValue(),
-      note: '',
-      direction: 'in',
-      currency: 'USD',
+      note: "",
+      direction: "in",
+      currency: "USD",
     },
-  })
+  });
 
-  const entryType = watch('entry_type')
+  const entryType = watch("entry_type");
 
   useEffect(() => {
-    if (!open) return
+    if (!open) return;
 
     reset({
       entry_type: resolvedDefaultType,
-      amount: '',
+      amount: "",
       recorded_at: toDateTimeLocalValue(),
-      note: '',
-      direction: resolvedDefaultType === 'withdrawal' ? 'out' : 'in',
-      currency: 'USD',
-    })
-  }, [open, reset, resolvedDefaultType])
+      note: "",
+      direction: resolvedDefaultType === "withdrawal" ? "out" : "in",
+      currency: "USD",
+    });
+  }, [open, reset, resolvedDefaultType]);
 
   async function onSubmit(values) {
     await createEntry.mutateAsync({
@@ -74,14 +74,14 @@ export function AddCapitalTransactionDialog({
       recorded_at: new Date(values.recorded_at).toISOString(),
       note: values.note,
       direction:
-        values.entry_type === 'withdrawal'
-          ? 'out'
-          : values.entry_type === 'adjustment'
+        values.entry_type === "withdrawal"
+          ? "out"
+          : values.entry_type === "adjustment"
             ? values.direction
-            : 'in',
+            : "in",
       currency: values.currency,
-    })
-    onOpenChange(false)
+    });
+    onOpenChange(false);
   }
 
   return (
@@ -89,16 +89,21 @@ export function AddCapitalTransactionDialog({
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>
-            {resolvedDefaultType === 'starting'
-              ? 'Set initial capital'
-              : 'Add transaction'}
+            {resolvedDefaultType === "starting"
+              ? "Set initial capital"
+              : "Add transaction"}
           </DialogTitle>
           <DialogDescription>
-            Manual capital changes only. Trades will not update this balance yet.
+            Manual capital changes only. Trades will not update this balance
+            yet.
           </DialogDescription>
         </DialogHeader>
 
-        <form className="space-y-4" onSubmit={handleSubmit(onSubmit)} noValidate>
+        <form
+          className="space-y-4"
+          onSubmit={handleSubmit(onSubmit)}
+          noValidate
+        >
           <div className="space-y-2">
             <Label htmlFor="entry_type">Type</Label>
             <Controller
@@ -121,11 +126,13 @@ export function AddCapitalTransactionDialog({
               )}
             />
             {errors.entry_type ? (
-              <p className="text-sm text-destructive">{errors.entry_type.message}</p>
+              <p className="text-sm text-destructive">
+                {errors.entry_type.message}
+              </p>
             ) : null}
           </div>
 
-          {entryType === 'adjustment' ? (
+          {entryType === "adjustment" ? (
             <div className="space-y-2">
               <Label htmlFor="direction">Adjustment direction</Label>
               <Controller
@@ -156,10 +163,12 @@ export function AddCapitalTransactionDialog({
                 step="0.01"
                 placeholder="1000.00"
                 aria-invalid={Boolean(errors.amount)}
-                {...register('amount')}
+                {...register("amount")}
               />
               {errors.amount ? (
-                <p className="text-sm text-destructive">{errors.amount.message}</p>
+                <p className="text-sm text-destructive">
+                  {errors.amount.message}
+                </p>
               ) : null}
             </div>
 
@@ -169,7 +178,7 @@ export function AddCapitalTransactionDialog({
                 id="recorded_at"
                 type="datetime-local"
                 aria-invalid={Boolean(errors.recorded_at)}
-                {...register('recorded_at')}
+                {...register("recorded_at")}
               />
               {errors.recorded_at ? (
                 <p className="text-sm text-destructive">
@@ -185,7 +194,7 @@ export function AddCapitalTransactionDialog({
               id="note"
               placeholder="Optional details"
               aria-invalid={Boolean(errors.note)}
-              {...register('note')}
+              {...register("note")}
             />
             {errors.note ? (
               <p className="text-sm text-destructive">{errors.note.message}</p>
@@ -202,11 +211,11 @@ export function AddCapitalTransactionDialog({
               Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Saving...' : 'Save transaction'}
+              {isSubmitting ? "Saving..." : "Save transaction"}
             </Button>
           </div>
         </form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }
