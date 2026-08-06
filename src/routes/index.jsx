@@ -3,8 +3,8 @@ import { ForgotPasswordPage } from '@/features/auth/pages/ForgotPasswordPage'
 import { LoginPage } from '@/features/auth/pages/LoginPage'
 import { RegisterPage } from '@/features/auth/pages/RegisterPage'
 import { ResetPasswordPage } from '@/features/auth/pages/ResetPasswordPage'
-import { AuthHomePage } from '@/features/auth/pages/AuthHomePage'
 import { CapitalPage } from '@/features/capital/pages/CapitalPage'
+import { DashboardPage } from '@/features/dashboard/pages/DashboardPage'
 import { InstrumentsPage } from '@/features/instruments/pages/InstrumentsPage'
 import { CreateTradePage } from '@/features/trades/pages/CreateTradePage'
 import { EditTradePage } from '@/features/trades/pages/EditTradePage'
@@ -41,7 +41,7 @@ export function AppRoutes() {
 
       <Route element={<ProtectedRoute />}>
         <Route element={<AppLayout />}>
-          <Route path={ROUTES.DASHBOARD} element={<AuthHomePage />} />
+          <Route path={ROUTES.DASHBOARD} element={<DashboardPage />} />
           <Route path={ROUTES.CAPITAL} element={<CapitalPage />} />
           <Route path={ROUTES.INSTRUMENTS} element={<InstrumentsPage />} />
           <Route path={ROUTES.TRADE_JOURNAL} element={<TradesPage />} />

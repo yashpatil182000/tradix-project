@@ -1,13 +1,30 @@
-import { supabase, handleSupabaseError } from './api'
+import { getCapitalEntries, buildCapitalSummary } from '@/services/capitalServices'
+import { getTrades } from '@/services/tradeServices'
+import {
+  buildCapitalGrowthSeries,
+  buildDashboardMetrics,
+  buildInstrumentPerformance,
+  buildMonthlyProfitSeries,
+  buildSetupPerformance,
+  getOpenTrades,
+  getRecentTrades,
+} from '@/features/dashboard/utils/dashboardMetrics'
 
-export async function getDashboardSummary() {
-  // TODO: implement with supabase
-}
+export async function getDashboardData() {
+  const [trades, capitalEntries] = await Promise.all([
+    getTrades(),
+    getCapitalEntries(),
+  ])
 
-export async function getPerformanceStats() {
-  // TODO: implement with supabase
-}
+  const capitalSummary = buildCapitalSummary(capitalEntries)
 
-export async function getRecentTrades() {
-  // TODO: implement with supabase
+  return {
+    metrics: buildDashboardMetrics(trades, capitalSummary),
+    capitalGrowth: buildCapitalGrowthSeries(capitalEntries),
+    monthlyProfit: buildMonthlyProfitSeries(trades),
+    instrumentPerformance: buildInstrumentPerformance(trades),
+    setupPerformance: buildSetupPerformance(trades),
+    recentTrades: getRecentTrades(trades),
+    openTrades: getOpenTrades(trades),
+  }
 }

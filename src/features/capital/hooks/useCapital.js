@@ -36,6 +36,7 @@ export function useCreateCapitalEntry() {
     onSuccess: () => {
       toast.success('Transaction added')
       queryClient.invalidateQueries({ queryKey: capitalKeys.lists() })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
     },
     onError: (error) => {
       toast.error(error.message || 'Unable to add transaction')
