@@ -3,6 +3,7 @@ import { ForgotPasswordPage } from '@/features/auth/pages/ForgotPasswordPage'
 import { LoginPage } from '@/features/auth/pages/LoginPage'
 import { RegisterPage } from '@/features/auth/pages/RegisterPage'
 import { ResetPasswordPage } from '@/features/auth/pages/ResetPasswordPage'
+import { AnalyticsPage } from '@/features/analytics/pages/AnalyticsPage'
 import { CapitalPage } from '@/features/capital/pages/CapitalPage'
 import { DashboardPage } from '@/features/dashboard/pages/DashboardPage'
 import { InstrumentsPage } from '@/features/instruments/pages/InstrumentsPage'
@@ -18,10 +19,6 @@ import { AuthLayout } from '@/layouts/AuthLayout'
 import { ProtectedRoute } from '@/routes/ProtectedRoute'
 import { PublicRoute } from '@/routes/PublicRoute'
 import { ROUTES } from '@/routes/paths'
-
-function RoutePlaceholder() {
-  return null
-}
 
 export function AppRoutes() {
   return (
@@ -48,7 +45,7 @@ export function AppRoutes() {
           <Route path={`${ROUTES.TRADE_JOURNAL}/new`} element={<CreateTradePage />} />
           <Route path={`${ROUTES.TRADE_JOURNAL}/:tradeId`} element={<TradeDetailsPage />} />
           <Route path={`${ROUTES.TRADE_JOURNAL}/:tradeId/edit`} element={<EditTradePage />} />
-          <Route path={ROUTES.ANALYTICS} element={<RoutePlaceholder />} />
+          <Route path={ROUTES.ANALYTICS} element={<AnalyticsPage />} />
 
           <Route path={ROUTES.SETTINGS} element={<SettingsLayout />}>
             <Route
