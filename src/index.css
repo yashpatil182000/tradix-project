@@ -576,3 +576,30 @@
     color: var(--sidebar-primary-foreground);
   }
 }
+
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+  }
+
+  [data-slot="sidebar"],
+  header,
+  .print\:hidden {
+    display: none !important;
+  }
+
+  #report-print-root {
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+  }
+
+  #report-print-root table {
+    break-inside: auto;
+  }
+
+  #report-print-root tr {
+    break-inside: avoid;
+  }
+}

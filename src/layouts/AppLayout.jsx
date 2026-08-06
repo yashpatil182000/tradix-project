@@ -17,6 +17,7 @@ const navItems = [
   { to: ROUTES.DASHBOARD, label: 'Home' },
   { to: ROUTES.TRADE_JOURNAL, label: 'Journal' },
   { to: ROUTES.ANALYTICS, label: 'Analytics' },
+  { to: ROUTES.REPORTS, label: 'Reports' },
   { to: ROUTES.CAPITAL, label: 'Capital' },
   { to: ROUTES.INSTRUMENTS, label: 'Instruments' },
   { to: ROUTES.SETTINGS, label: 'Settings' },

@@ -7,6 +7,7 @@ import { AnalyticsPage } from '@/features/analytics/pages/AnalyticsPage'
 import { CapitalPage } from '@/features/capital/pages/CapitalPage'
 import { DashboardPage } from '@/features/dashboard/pages/DashboardPage'
 import { InstrumentsPage } from '@/features/instruments/pages/InstrumentsPage'
+import { ReportsPage } from '@/features/reports/pages/ReportsPage'
 import { CreateTradePage } from '@/features/trades/pages/CreateTradePage'
 import { EditTradePage } from '@/features/trades/pages/EditTradePage'
 import { TradeDetailsPage } from '@/features/trades/pages/TradeDetailsPage'
@@ -46,6 +47,7 @@ export function AppRoutes() {
           <Route path={`${ROUTES.TRADE_JOURNAL}/:tradeId`} element={<TradeDetailsPage />} />
           <Route path={`${ROUTES.TRADE_JOURNAL}/:tradeId/edit`} element={<EditTradePage />} />
           <Route path={ROUTES.ANALYTICS} element={<AnalyticsPage />} />
+          <Route path={ROUTES.REPORTS} element={<ReportsPage />} />
 
           <Route path={ROUTES.SETTINGS} element={<SettingsLayout />}>
             <Route

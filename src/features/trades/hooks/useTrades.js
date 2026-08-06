@@ -37,6 +37,7 @@ function invalidateTradeQueries(queryClient, id) {
   queryClient.invalidateQueries({ queryKey: capitalKeys.lists() })
   queryClient.invalidateQueries({ queryKey: ['dashboard'] })
   queryClient.invalidateQueries({ queryKey: ['analytics'] })
+  queryClient.invalidateQueries({ queryKey: ['reports'] })
   if (id) {
     queryClient.invalidateQueries({ queryKey: tradeKeys.detail(id) })
   }

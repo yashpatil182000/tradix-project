@@ -8,6 +8,7 @@ export const ROUTES = {
   INSTRUMENTS: '/instruments',
   TRADE_JOURNAL: '/trade-journal',
   ANALYTICS: '/analytics',
+  REPORTS: '/reports',
   SETTINGS: '/settings',
   SETTINGS_INSTRUMENTS: '/settings/instruments',
   SETTINGS_ENTRY_REASONS: '/settings/entry-reasons',
