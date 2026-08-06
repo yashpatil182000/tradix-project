@@ -5,6 +5,7 @@ import {
   BarChart,
   CartesianGrid,
   Cell,
+  Legend,
   Line,
   LineChart,
   Pie,
@@ -25,15 +26,13 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { CalendarHeatmap } from '@/features/analytics/components/CalendarHeatmap'
+import {
+  ChartTooltipContent,
+  chartLegendProps,
+  chartTooltipStyle,
+  resolveTooltipColor,
+} from '@/components/shared/charts/chartHelpers'
 import { formatCurrency } from '@/features/capital/utils/formatCapital'
-
-const tooltipStyle = {
-  borderRadius: '10px',
-  border: '1px solid var(--border)',
-  background: 'var(--chart-tooltip)',
-  color: 'var(--foreground)',
-  fontSize: '12px',
-}
 
 function ChartCard({ title, description, children, empty, className }) {
   return (
@@ -48,28 +47,30 @@ function ChartCard({ title, description, children, empty, className }) {
             No data yet
           </div>
         ) : (
-          <div className="h-56 w-full">{children}</div>
+          <div className="flex h-56 w-full flex-col outline-none [&_*]:outline-none">
+            {children}
+          </div>
         )}
       </CardContent>
     </Card>
   )
 }
 
-function CurrencyTooltip({ active, payload, label }) {
-  if (!active || !payload?.length) return null
+function ChartBody({ children }) {
+  return <div className="min-h-0 flex-1">{children}</div>
+}
+
+function PnlLegend({ profitColor = 'var(--chart-profit)' }) {
   return (
-    <div style={tooltipStyle} className="px-3 py-2 shadow-card">
-      {label ? <p className="mb-1 font-medium">{label}</p> : null}
-      {payload.map((item) => (
-        <p key={`${item.dataKey}-${item.name}`} className="tabular-nums">
-          {item.name}:{' '}
-          {typeof item.value === 'number' &&
-          (String(item.dataKey).toLowerCase().includes('rate') ||
-            String(item.dataKey).toLowerCase().includes('drawdown'))
-            ? `${item.value.toFixed(1)}%`
-            : formatCurrency(item.value)}
-        </p>
-      ))}
+    <div className="mb-2 flex shrink-0 justify-end gap-3 text-caption text-muted-foreground">
+      <span className="inline-flex items-center gap-1.5">
+        <span className="size-2 rounded-full" style={{ backgroundColor: profitColor }} />
+        Profit
+      </span>
+      <span className="inline-flex items-center gap-1.5">
+        <span className="size-2 rounded-full bg-[var(--chart-loss)]" />
+        Loss
+      </span>
     </div>
   )
 }
@@ -83,35 +84,40 @@ function compactTick(value) {
 
 function HorizontalPnlChart({ data }) {
   return (
-    <ResponsiveContainer width="100%" height="100%">
-      <BarChart data={data} layout="vertical" margin={{ left: 8 }}>
-        <CartesianGrid stroke="var(--chart-grid)" strokeDasharray="3 3" horizontal={false} />
-        <XAxis
-          type="number"
-          tick={{ fill: 'var(--chart-axis)', fontSize: 12 }}
-          axisLine={{ stroke: 'var(--chart-grid)' }}
-          tickLine={false}
-          tickFormatter={compactTick}
-        />
-        <YAxis
-          type="category"
-          dataKey="name"
-          width={84}
-          tick={{ fill: 'var(--chart-axis)', fontSize: 12 }}
-          axisLine={false}
-          tickLine={false}
-        />
-        <Tooltip content={<CurrencyTooltip />} />
-        <Bar dataKey="pnl" name="P/L" radius={[0, 6, 6, 0]}>
-          {data.map((entry) => (
-            <Cell
-              key={entry.name}
-              fill={entry.pnl >= 0 ? 'var(--chart-profit)' : 'var(--chart-loss)'}
+    <>
+      <PnlLegend />
+      <ChartBody>
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={data} layout="vertical" margin={{ left: 8, top: 4, right: 8 }}>
+            <CartesianGrid stroke="var(--chart-grid)" strokeDasharray="3 3" horizontal={false} />
+            <XAxis
+              type="number"
+              tick={{ fill: 'var(--chart-axis)', fontSize: 12 }}
+              axisLine={{ stroke: 'var(--chart-grid)' }}
+              tickLine={false}
+              tickFormatter={compactTick}
             />
-          ))}
-        </Bar>
-      </BarChart>
-    </ResponsiveContainer>
+            <YAxis
+              type="category"
+              dataKey="name"
+              width={84}
+              tick={{ fill: 'var(--chart-axis)', fontSize: 12 }}
+              axisLine={false}
+              tickLine={false}
+            />
+            <Tooltip content={<ChartTooltipContent />} />
+            <Bar dataKey="pnl" name="P/L" radius={[0, 6, 6, 0]}>
+              {data.map((entry) => (
+                <Cell
+                  key={entry.name}
+                  fill={entry.pnl >= 0 ? 'var(--chart-profit)' : 'var(--chart-loss)'}
+                />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </ChartBody>
+    </>
   )
 }
 
@@ -135,34 +141,37 @@ export function AnalyticsCharts({
         description="Cumulative win rate over closed trades"
         empty={!winRateSeries.length}
       >
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={winRateSeries}>
-            <CartesianGrid stroke="var(--chart-grid)" strokeDasharray="3 3" />
-            <XAxis
-              dataKey="label"
-              tick={{ fill: 'var(--chart-axis)', fontSize: 12 }}
-              axisLine={{ stroke: 'var(--chart-grid)' }}
-              tickLine={false}
-            />
-            <YAxis
-              domain={[0, 100]}
-              tick={{ fill: 'var(--chart-axis)', fontSize: 12 }}
-              axisLine={false}
-              tickLine={false}
-              width={40}
-              tickFormatter={(value) => `${value}%`}
-            />
-            <Tooltip content={<CurrencyTooltip />} />
-            <Line
-              type="monotone"
-              dataKey="winRate"
-              name="Win Rate"
-              stroke="var(--chart-profit)"
-              strokeWidth={2}
-              dot={false}
-            />
-          </LineChart>
-        </ResponsiveContainer>
+        <ChartBody>
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={winRateSeries} margin={{ top: 8, right: 8 }}>
+              <CartesianGrid stroke="var(--chart-grid)" strokeDasharray="3 3" />
+              <XAxis
+                dataKey="label"
+                tick={{ fill: 'var(--chart-axis)', fontSize: 12 }}
+                axisLine={{ stroke: 'var(--chart-grid)' }}
+                tickLine={false}
+              />
+              <YAxis
+                domain={[0, 100]}
+                tick={{ fill: 'var(--chart-axis)', fontSize: 12 }}
+                axisLine={false}
+                tickLine={false}
+                width={40}
+                tickFormatter={(value) => `${value}%`}
+              />
+              <Tooltip content={<ChartTooltipContent />} />
+              <Legend {...chartLegendProps} />
+              <Line
+                type="monotone"
+                dataKey="winRate"
+                name="Win Rate"
+                stroke="var(--chart-profit)"
+                strokeWidth={2}
+                dot={false}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </ChartBody>
       </ChartCard>
 
       <ChartCard
@@ -170,34 +179,37 @@ export function AnalyticsCharts({
         description="Running capital balance"
         empty={!capitalCurve.length}
       >
-        <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={capitalCurve}>
-            <CartesianGrid stroke="var(--chart-grid)" strokeDasharray="3 3" />
-            <XAxis
-              dataKey="label"
-              tick={{ fill: 'var(--chart-axis)', fontSize: 12 }}
-              axisLine={{ stroke: 'var(--chart-grid)' }}
-              tickLine={false}
-            />
-            <YAxis
-              tick={{ fill: 'var(--chart-axis)', fontSize: 12 }}
-              axisLine={false}
-              tickLine={false}
-              width={64}
-              tickFormatter={compactTick}
-            />
-            <Tooltip content={<CurrencyTooltip />} />
-            <Area
-              type="monotone"
-              dataKey="capital"
-              name="Capital"
-              stroke="var(--chart-capital)"
-              fill="var(--chart-capital)"
-              fillOpacity={0.18}
-              strokeWidth={2}
-            />
-          </AreaChart>
-        </ResponsiveContainer>
+        <ChartBody>
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={capitalCurve} margin={{ top: 8, right: 8 }}>
+              <CartesianGrid stroke="var(--chart-grid)" strokeDasharray="3 3" />
+              <XAxis
+                dataKey="label"
+                tick={{ fill: 'var(--chart-axis)', fontSize: 12 }}
+                axisLine={{ stroke: 'var(--chart-grid)' }}
+                tickLine={false}
+              />
+              <YAxis
+                tick={{ fill: 'var(--chart-axis)', fontSize: 12 }}
+                axisLine={false}
+                tickLine={false}
+                width={64}
+                tickFormatter={compactTick}
+              />
+              <Tooltip content={<ChartTooltipContent />} />
+              <Legend {...chartLegendProps} />
+              <Area
+                type="monotone"
+                dataKey="capital"
+                name="Capital"
+                stroke="var(--chart-capital)"
+                fill="var(--chart-capital)"
+                fillOpacity={0.18}
+                strokeWidth={2}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </ChartBody>
       </ChartCard>
 
       <ChartCard
@@ -205,34 +217,37 @@ export function AnalyticsCharts({
         description="Peak-to-trough capital decline"
         empty={!drawdownSeries.length}
       >
-        <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={drawdownSeries}>
-            <CartesianGrid stroke="var(--chart-grid)" strokeDasharray="3 3" />
-            <XAxis
-              dataKey="label"
-              tick={{ fill: 'var(--chart-axis)', fontSize: 12 }}
-              axisLine={{ stroke: 'var(--chart-grid)' }}
-              tickLine={false}
-            />
-            <YAxis
-              tick={{ fill: 'var(--chart-axis)', fontSize: 12 }}
-              axisLine={false}
-              tickLine={false}
-              width={48}
-              tickFormatter={(value) => `${value}%`}
-            />
-            <Tooltip content={<CurrencyTooltip />} />
-            <Area
-              type="monotone"
-              dataKey="drawdown"
-              name="Drawdown"
-              stroke="var(--chart-drawdown)"
-              fill="var(--chart-drawdown)"
-              fillOpacity={0.2}
-              strokeWidth={2}
-            />
-          </AreaChart>
-        </ResponsiveContainer>
+        <ChartBody>
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={drawdownSeries} margin={{ top: 8, right: 8 }}>
+              <CartesianGrid stroke="var(--chart-grid)" strokeDasharray="3 3" />
+              <XAxis
+                dataKey="label"
+                tick={{ fill: 'var(--chart-axis)', fontSize: 12 }}
+                axisLine={{ stroke: 'var(--chart-grid)' }}
+                tickLine={false}
+              />
+              <YAxis
+                tick={{ fill: 'var(--chart-axis)', fontSize: 12 }}
+                axisLine={false}
+                tickLine={false}
+                width={48}
+                tickFormatter={(value) => `${value}%`}
+              />
+              <Tooltip content={<ChartTooltipContent />} />
+              <Legend {...chartLegendProps} />
+              <Area
+                type="monotone"
+                dataKey="drawdown"
+                name="Drawdown"
+                stroke="var(--chart-drawdown)"
+                fill="var(--chart-drawdown)"
+                fillOpacity={0.2}
+                strokeWidth={2}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </ChartBody>
       </ChartCard>
 
       <ChartCard
@@ -240,33 +255,36 @@ export function AnalyticsCharts({
         description="Closed trade P/L by month"
         empty={!monthlyReturns.length}
       >
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={monthlyReturns}>
-            <CartesianGrid stroke="var(--chart-grid)" strokeDasharray="3 3" />
-            <XAxis
-              dataKey="month"
-              tick={{ fill: 'var(--chart-axis)', fontSize: 12 }}
-              axisLine={{ stroke: 'var(--chart-grid)' }}
-              tickLine={false}
-            />
-            <YAxis
-              tick={{ fill: 'var(--chart-axis)', fontSize: 12 }}
-              axisLine={false}
-              tickLine={false}
-              width={64}
-              tickFormatter={compactTick}
-            />
-            <Tooltip content={<CurrencyTooltip />} />
-            <Bar dataKey="pnl" name="P/L" radius={[6, 6, 0, 0]}>
-              {monthlyReturns.map((entry) => (
-                <Cell
-                  key={entry.month}
-                  fill={entry.pnl >= 0 ? 'var(--chart-profit)' : 'var(--chart-loss)'}
-                />
-              ))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
+        <PnlLegend />
+        <ChartBody>
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={monthlyReturns} margin={{ top: 4, right: 8 }}>
+              <CartesianGrid stroke="var(--chart-grid)" strokeDasharray="3 3" />
+              <XAxis
+                dataKey="month"
+                tick={{ fill: 'var(--chart-axis)', fontSize: 12 }}
+                axisLine={{ stroke: 'var(--chart-grid)' }}
+                tickLine={false}
+              />
+              <YAxis
+                tick={{ fill: 'var(--chart-axis)', fontSize: 12 }}
+                axisLine={false}
+                tickLine={false}
+                width={64}
+                tickFormatter={compactTick}
+              />
+              <Tooltip content={<ChartTooltipContent />} />
+              <Bar dataKey="pnl" name="P/L" radius={[6, 6, 0, 0]}>
+                {monthlyReturns.map((entry) => (
+                  <Cell
+                    key={entry.month}
+                    fill={entry.pnl >= 0 ? 'var(--chart-profit)' : 'var(--chart-loss)'}
+                  />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </ChartBody>
       </ChartCard>
 
       <ChartCard
@@ -274,34 +292,47 @@ export function AnalyticsCharts({
         description="Wins, losses, and open trades"
         empty={!tradeDistribution.length}
       >
-        <ResponsiveContainer width="100%" height="100%">
-          <PieChart>
-            <Pie
-              data={tradeDistribution}
-              dataKey="value"
-              nameKey="name"
-              innerRadius={48}
-              outerRadius={80}
-              paddingAngle={3}
-            >
-              {tradeDistribution.map((entry) => (
-                <Cell key={entry.name} fill={entry.color} />
-              ))}
-            </Pie>
-            <Tooltip
-              content={({ active, payload }) => {
-                if (!active || !payload?.length) return null
-                const item = payload[0]
-                return (
-                  <div style={tooltipStyle} className="px-3 py-2 shadow-card">
-                    <p className="font-medium">{item.name}</p>
-                    <p className="tabular-nums">{item.value} trades</p>
-                  </div>
-                )
-              }}
-            />
-          </PieChart>
-        </ResponsiveContainer>
+        <ChartBody>
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie
+                data={tradeDistribution}
+                dataKey="value"
+                nameKey="name"
+                innerRadius={48}
+                outerRadius={72}
+                paddingAngle={3}
+              >
+                {tradeDistribution.map((entry) => (
+                  <Cell key={entry.name} fill={entry.color} />
+                ))}
+              </Pie>
+              <Tooltip
+                content={({ active, payload }) => {
+                  if (!active || !payload?.length) return null
+                  const item = payload[0]
+                  const color = resolveTooltipColor(item) || item.payload?.color
+                  return (
+                    <div style={chartTooltipStyle} className="px-3 py-2 shadow-card">
+                      <div className="flex items-center gap-2">
+                        <span
+                          aria-hidden
+                          className="size-2.5 shrink-0 rounded-full"
+                          style={{ backgroundColor: color }}
+                        />
+                        <span className="font-medium">{item.name}</span>
+                      </div>
+                      <p className="mt-1 tabular-nums text-muted-foreground">
+                        {item.value} trades
+                      </p>
+                    </div>
+                  )
+                }}
+              />
+              <Legend {...chartLegendProps} verticalAlign="bottom" align="center" />
+            </PieChart>
+          </ResponsiveContainer>
+        </ChartBody>
       </ChartCard>
 
       <ChartCard
@@ -333,61 +364,92 @@ export function AnalyticsCharts({
         description="Planned risk against reward"
         empty={!riskReward.length}
       >
-        <ResponsiveContainer width="100%" height="100%">
-          <ScatterChart>
-            <CartesianGrid stroke="var(--chart-grid)" strokeDasharray="3 3" />
-            <XAxis
-              type="number"
-              dataKey="risk"
-              name="Risk"
-              tick={{ fill: 'var(--chart-axis)', fontSize: 12 }}
-              axisLine={{ stroke: 'var(--chart-grid)' }}
-              tickLine={false}
-              tickFormatter={compactTick}
-            />
-            <YAxis
-              type="number"
-              dataKey="reward"
-              name="Reward"
-              tick={{ fill: 'var(--chart-axis)', fontSize: 12 }}
-              axisLine={false}
-              tickLine={false}
-              width={64}
-              tickFormatter={compactTick}
-            />
-            <ZAxis range={[60, 60]} />
-            <Tooltip
-              cursor={{ strokeDasharray: '3 3' }}
-              content={({ active, payload }) => {
-                if (!active || !payload?.length) return null
-                const point = payload[0]?.payload
-                if (!point) return null
-                return (
-                  <div style={tooltipStyle} className="px-3 py-2 shadow-card">
-                    <p className="mb-1 font-medium">{point.symbol}</p>
-                    <p>Risk: {formatCurrency(point.risk)}</p>
-                    <p>Reward: {formatCurrency(point.reward)}</p>
-                    <p>P/L: {formatCurrency(point.pnl)}</p>
-                  </div>
-                )
-              }}
-            />
-            <Scatter data={riskReward} fill="var(--chart-analytics)">
-              {riskReward.map((entry) => (
-                <Cell
-                  key={entry.id}
-                  fill={
-                    entry.result === 'win'
+        <div className="mb-2 flex shrink-0 justify-end gap-3 text-caption text-muted-foreground">
+          <span className="inline-flex items-center gap-1.5">
+            <span className="size-2 rounded-full bg-[var(--chart-profit)]" />
+            Win
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <span className="size-2 rounded-full bg-[var(--chart-loss)]" />
+            Loss
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <span className="size-2 rounded-full bg-[var(--chart-analytics)]" />
+            Other
+          </span>
+        </div>
+        <ChartBody>
+          <ResponsiveContainer width="100%" height="100%">
+            <ScatterChart margin={{ top: 4, right: 8 }}>
+              <CartesianGrid stroke="var(--chart-grid)" strokeDasharray="3 3" />
+              <XAxis
+                type="number"
+                dataKey="risk"
+                name="Risk"
+                tick={{ fill: 'var(--chart-axis)', fontSize: 12 }}
+                axisLine={{ stroke: 'var(--chart-grid)' }}
+                tickLine={false}
+                tickFormatter={compactTick}
+              />
+              <YAxis
+                type="number"
+                dataKey="reward"
+                name="Reward"
+                tick={{ fill: 'var(--chart-axis)', fontSize: 12 }}
+                axisLine={false}
+                tickLine={false}
+                width={64}
+                tickFormatter={compactTick}
+              />
+              <ZAxis range={[60, 60]} />
+              <Tooltip
+                cursor={{ strokeDasharray: '3 3' }}
+                content={({ active, payload }) => {
+                  if (!active || !payload?.length) return null
+                  const point = payload[0]?.payload
+                  if (!point) return null
+                  const color =
+                    point.result === 'win'
                       ? 'var(--chart-profit)'
-                      : entry.result === 'loss'
+                      : point.result === 'loss'
                         ? 'var(--chart-loss)'
                         : 'var(--chart-analytics)'
-                  }
-                />
-              ))}
-            </Scatter>
-          </ScatterChart>
-        </ResponsiveContainer>
+                  return (
+                    <div style={chartTooltipStyle} className="px-3 py-2 shadow-card">
+                      <div className="mb-1.5 flex items-center gap-2">
+                        <span
+                          aria-hidden
+                          className="size-2.5 shrink-0 rounded-full"
+                          style={{ backgroundColor: color }}
+                        />
+                        <span className="font-medium">{point.symbol}</span>
+                      </div>
+                      <div className="space-y-1 tabular-nums">
+                        <p>Risk: {formatCurrency(point.risk)}</p>
+                        <p>Reward: {formatCurrency(point.reward)}</p>
+                        <p>P/L: {formatCurrency(point.pnl)}</p>
+                      </div>
+                    </div>
+                  )
+                }}
+              />
+              <Scatter data={riskReward} fill="var(--chart-analytics)">
+                {riskReward.map((entry) => (
+                  <Cell
+                    key={entry.id}
+                    fill={
+                      entry.result === 'win'
+                        ? 'var(--chart-profit)'
+                        : entry.result === 'loss'
+                          ? 'var(--chart-loss)'
+                          : 'var(--chart-analytics)'
+                    }
+                  />
+                ))}
+              </Scatter>
+            </ScatterChart>
+          </ResponsiveContainer>
+        </ChartBody>
       </ChartCard>
 
       <ChartCard

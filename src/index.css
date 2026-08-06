@@ -575,6 +575,24 @@
     background: var(--primary-hover);
     color: var(--sidebar-primary-foreground);
   }
+
+  .recharts-wrapper,
+  .recharts-wrapper *,
+  .recharts-surface,
+  .recharts-responsive-container,
+  .recharts-legend-wrapper {
+    outline: none !important;
+  }
+
+  .recharts-wrapper:focus,
+  .recharts-wrapper:focus-visible,
+  .recharts-surface:focus,
+  .recharts-surface:focus-visible,
+  .recharts-responsive-container:focus,
+  .recharts-responsive-container:focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
+  }
 }
 
 @media print {
