@@ -6,6 +6,7 @@ import {
   formatReportMetric,
   tradeResultLabel,
 } from '@/features/reports/utils/buildReport'
+import { TradixLogo } from '@/components/shared/TradixLogo'
 import { cn } from '@/lib/utils'
 
 function SummaryTile({ label, value, className }) {
@@ -34,9 +35,7 @@ export function ReportPreview({ report }) {
       className="rounded-card border border-border bg-card p-4 shadow-card sm:p-6 print:border-0 print:p-0 print:shadow-none"
     >
       <header className="border-b border-border pb-4">
-        <p className="text-caption font-medium uppercase tracking-[0.14em] text-muted-foreground">
-          Tradix
-        </p>
+        <TradixLogo as="p" size="sm" className="text-muted-foreground" />
         <h2 className="mt-2 text-heading-2">{report.title}</h2>
         <p className="mt-1 text-sm text-muted-foreground">{report.period.label}</p>
         <p className="mt-1 text-caption text-muted-foreground">

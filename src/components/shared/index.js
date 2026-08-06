@@ -1,4 +1,5 @@
 export { ThemeToggle } from '@/components/shared/ThemeToggle'
+export { TradixLogo } from '@/components/shared/TradixLogo'
 export { Typography } from '@/components/shared/Typography'
 export {
   SkipLink,

@@ -3,6 +3,7 @@ import { PanelLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { SkipLink } from '@/components/shared/PageStates'
 import { ThemeToggle } from '@/components/shared/ThemeToggle'
+import { TradixLogo } from '@/components/shared/TradixLogo'
 import {
   AppContent,
   AppHeader,
@@ -23,6 +24,23 @@ const navItems = [
   { to: ROUTES.INSTRUMENTS, label: 'Instruments' },
   { to: ROUTES.SETTINGS, label: 'Settings' },
 ]
+
+function SidebarBrand() {
+  const { collapsed } = useSidebar()
+
+  return (
+    <div
+      className={cn(
+        'flex h-14 items-center border-b border-sidebar-border',
+        collapsed ? 'justify-center px-2' : 'px-4',
+      )}
+    >
+      <Link to={ROUTES.DASHBOARD} className="inline-flex items-center" aria-label="Tradix">
+        <TradixLogo size="md" compact={collapsed} />
+      </Link>
+    </div>
+  )
+}
 
 function SidebarNav() {
   const { collapsed } = useSidebar()
@@ -70,8 +88,8 @@ function HeaderActions() {
         <PanelLeft className="size-4" />
       </Button>
 
-      <Link to={ROUTES.DASHBOARD} className="text-heading-4">
-        Tradix
+      <Link to={ROUTES.DASHBOARD} className="inline-flex items-center">
+        <TradixLogo size="md" />
       </Link>
 
       <div className="ml-auto flex items-center gap-2">
@@ -92,9 +110,7 @@ export function AppLayout() {
     <AppShell>
       <SkipLink />
       <AppSidebar>
-        <div className="flex h-14 items-center border-b border-sidebar-border px-4">
-          <span className="text-heading-4">Tradix</span>
-        </div>
+        <SidebarBrand />
         <SidebarNav />
       </AppSidebar>
 

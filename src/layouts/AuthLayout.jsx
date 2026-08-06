@@ -1,5 +1,6 @@
 import { Outlet } from 'react-router-dom'
 import { SkipLink } from '@/components/shared/PageStates'
+import { TradixLogo } from '@/components/shared/TradixLogo'
 
 export function AuthLayout() {
   return (
@@ -7,8 +8,10 @@ export function AuthLayout() {
       <SkipLink />
       <div className="flex w-full flex-col items-center gap-6">
         <div className="text-center">
-          <p className="text-2xl font-semibold tracking-tight">Tradix</p>
-          <p className="text-sm text-muted-foreground">Trading Journal</p>
+          <TradixLogo as="p" size="xl" />
+          <p className="mt-2 text-sm tracking-wide text-muted-foreground">
+            Trading Journal
+          </p>
         </div>
         <main id="main-content" className="w-full max-w-md" tabIndex={-1}>
           <Outlet />
