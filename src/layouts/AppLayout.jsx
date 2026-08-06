@@ -1,49 +1,61 @@
-import { Link, NavLink, Outlet } from 'react-router-dom'
-import { PanelLeft } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { SkipLink } from '@/components/shared/PageStates'
-import { ThemeToggle } from '@/components/shared/ThemeToggle'
-import { TradixLogo } from '@/components/shared/TradixLogo'
+import { Link, NavLink, Outlet } from "react-router-dom";
+import { CircleUserRound, LogOut, PanelLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { SkipLink } from "@/components/shared/PageStates";
+import { ThemeToggle } from "@/components/shared/ThemeToggle";
+import { TradixLogo } from "@/components/shared/TradixLogo";
 import {
   AppContent,
   AppHeader,
   AppShell,
   AppSidebar,
   useSidebar,
-} from '@/components/shared/layout/AppShell'
-import { useUser } from '@/context/UserContext'
-import { ROUTES } from '@/routes/paths'
-import { cn } from '@/lib/utils'
+} from "@/components/shared/layout/AppShell";
+import { useUser } from "@/context/UserContext";
+import { ROUTES } from "@/routes/paths";
+import { cn } from "@/lib/utils";
 
 const navItems = [
-  { to: ROUTES.DASHBOARD, label: 'Home' },
-  { to: ROUTES.TRADE_JOURNAL, label: 'Journal' },
-  { to: ROUTES.ANALYTICS, label: 'Analytics' },
-  { to: ROUTES.REPORTS, label: 'Reports' },
-  { to: ROUTES.CAPITAL, label: 'Capital' },
-  { to: ROUTES.INSTRUMENTS, label: 'Instruments' },
-  { to: ROUTES.SETTINGS, label: 'Settings' },
-]
+  { to: ROUTES.DASHBOARD, label: "Home" },
+  { to: ROUTES.TRADE_JOURNAL, label: "Journal" },
+  { to: ROUTES.ANALYTICS, label: "Analytics" },
+  { to: ROUTES.REPORTS, label: "Reports" },
+  { to: ROUTES.CAPITAL, label: "Capital" },
+  { to: ROUTES.INSTRUMENTS, label: "Instruments" },
+  { to: ROUTES.SETTINGS, label: "Settings" },
+];
 
 function SidebarBrand() {
-  const { collapsed } = useSidebar()
+  const { collapsed } = useSidebar();
 
   return (
     <div
       className={cn(
-        'flex h-14 items-center border-b border-sidebar-border',
-        collapsed ? 'justify-center px-2' : 'px-4',
+        "flex h-14 items-center border-b border-sidebar-border",
+        collapsed ? "justify-center px-2" : "px-4",
       )}
     >
-      <Link to={ROUTES.DASHBOARD} className="inline-flex items-center" aria-label="Tradix">
+      <Link
+        to={ROUTES.DASHBOARD}
+        className="inline-flex items-center"
+        aria-label="Tradix"
+      >
         <TradixLogo size="md" compact={collapsed} />
       </Link>
     </div>
-  )
+  );
 }
 
 function SidebarNav() {
-  const { collapsed } = useSidebar()
+  const { collapsed } = useSidebar();
 
   return (
     <nav className="flex flex-1 flex-col gap-1 p-2" aria-label="Primary">
@@ -55,8 +67,8 @@ function SidebarNav() {
           aria-label={item.label}
           title={item.label}
           className={cn(
-            'rounded-control px-3 py-2 text-sm font-medium transition-colors',
-            collapsed && 'px-0 text-center',
+            "rounded-control px-3 py-2 text-sm font-medium transition-colors",
+            collapsed && "px-0 text-center",
           )}
         >
           {collapsed ? (
@@ -67,12 +79,12 @@ function SidebarNav() {
         </NavLink>
       ))}
     </nav>
-  )
+  );
 }
 
 function HeaderActions() {
-  const { user, logout } = useUser()
-  const { toggle, collapsed } = useSidebar()
+  const { user, logout } = useUser();
+  const { toggle, collapsed } = useSidebar();
 
   return (
     <>
@@ -82,7 +94,7 @@ function HeaderActions() {
         size="icon"
         className="hidden md:inline-flex"
         onClick={toggle}
-        aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+        aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         aria-expanded={!collapsed}
       >
         <PanelLeft className="size-4" />
@@ -93,16 +105,38 @@ function HeaderActions() {
       </Link>
 
       <div className="ml-auto flex items-center gap-2">
-        <span className="hidden text-small text-muted-foreground sm:inline">
-          {user?.email}
-        </span>
         <ThemeToggle />
-        <Button type="button" variant="outline" size="sm" onClick={logout}>
-          Log out
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              aria-label="Account menu"
+            >
+              <CircleUserRound className="size-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-64 min-w-56">
+            <DropdownMenuLabel className="space-y-1 font-normal">
+              <p className="text-caption text-muted-foreground">Signed in as</p>
+              <p className="truncate text-sm font-medium text-foreground">
+                {user?.email || "—"}
+              </p>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              variant="destructive"
+              onSelect={() => logout()}
+            >
+              <LogOut className="size-4" />
+              Log out
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </>
-  )
+  );
 }
 
 export function AppLayout() {
@@ -129,10 +163,10 @@ export function AppLayout() {
               to={item.to}
               className={({ isActive }) =>
                 cn(
-                  'rounded-control px-3 py-1.5 text-small font-medium whitespace-nowrap transition-colors',
+                  "rounded-control px-3 py-1.5 text-small font-medium whitespace-nowrap transition-colors",
                   isActive
-                    ? 'bg-secondary text-secondary-foreground'
-                    : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+                    ? "bg-secondary text-secondary-foreground"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground",
                 )
               }
             >
@@ -146,5 +180,5 @@ export function AppLayout() {
         </main>
       </AppContent>
     </AppShell>
-  )
+  );
 }
