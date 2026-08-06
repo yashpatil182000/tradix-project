@@ -14,34 +14,29 @@ declare
   t_id uuid;
   prefs jsonb;
 begin
-  -- Instruments -----------------------------------------------------------------
-  insert into public.instruments (user_id, symbol, name, type, is_active)
-  values
-    (uid, 'GBPUSD', 'Pound / Dollar', 'forex', true),
-    (uid, 'NAS100', 'Nasdaq 100', 'index', true),
-    (uid, 'BTCUSD', 'Bitcoin', 'crypto', true),
-    (uid, 'US30', 'Dow Jones', 'index', true)
-  on conflict (user_id, symbol) do update
-    set name = excluded.name,
-        type = excluded.type,
-        is_active = true,
+  -- Resolve master instruments ------------------------------------------------
+  select id into inst_xau from public.master_instruments where symbol = 'XAUUSD';
+  select id into inst_eur from public.master_instruments where symbol = 'EURUSD';
+  select id into inst_gbp from public.master_instruments where symbol = 'GBPUSD';
+  select id into inst_nas from public.master_instruments where symbol = 'NAS100';
+  select id into inst_btc from public.master_instruments where symbol = 'BTCUSD';
+  select id into inst_us30 from public.master_instruments where symbol = 'US30';
+  select id into inst_gbpsnzd from public.master_instruments where symbol = 'GPBSNZD';
+
+  if inst_gbpsnzd is null then
+    select id into inst_gbpsnzd from public.master_instruments where symbol = 'GBPSNZD';
+  end if;
+
+  -- Enable demo instruments for the user --------------------------------------
+  insert into public.user_instruments (user_id, master_instrument_id, is_enabled)
+  select uid, m.id, true
+  from public.master_instruments m
+  where m.symbol in (
+    'XAUUSD', 'EURUSD', 'GBPUSD', 'NAS100', 'BTCUSD', 'US30', 'GPBSNZD', 'GBPSNZD'
+  )
+  on conflict (user_id, master_instrument_id) do update
+    set is_enabled = true,
         updated_at = timezone('utc', now());
-
-  update public.instruments
-  set type = 'forex', name = coalesce(name, 'Euro / Dollar')
-  where user_id = uid and symbol = 'EURUSD';
-
-  update public.instruments
-  set name = coalesce(name, 'Gold')
-  where user_id = uid and symbol = 'XAUUSD';
-
-  select id into inst_xau from public.instruments where user_id = uid and symbol = 'XAUUSD';
-  select id into inst_eur from public.instruments where user_id = uid and symbol = 'EURUSD';
-  select id into inst_gbp from public.instruments where user_id = uid and symbol = 'GBPUSD';
-  select id into inst_nas from public.instruments where user_id = uid and symbol = 'NAS100';
-  select id into inst_btc from public.instruments where user_id = uid and symbol = 'BTCUSD';
-  select id into inst_us30 from public.instruments where user_id = uid and symbol = 'US30';
-  select id into inst_gbpsnzd from public.instruments where user_id = uid and symbol = 'GPBSNZD';
 
   -- Config options (trade form dropdowns / chips) --------------------------------
   prefs := jsonb_build_object(
@@ -580,7 +575,7 @@ end $$;
 
 -- Quick verification counts
 select
-  (select count(*) from public.instruments where user_id = 'e3529656-19dc-4b6a-8883-ec1a5d542173') as instruments,
+  (select count(*) from public.user_instruments where user_id = 'e3529656-19dc-4b6a-8883-ec1a5d542173' and is_enabled = true) as enabled_instruments,
   (select count(*) from public.trades where user_id = 'e3529656-19dc-4b6a-8883-ec1a5d542173') as trades,
   (select count(*) from public.trades where user_id = 'e3529656-19dc-4b6a-8883-ec1a5d542173' and status = 'closed') as closed_trades,
   (select count(*) from public.trades where user_id = 'e3529656-19dc-4b6a-8883-ec1a5d542173' and status = 'open') as open_trades,

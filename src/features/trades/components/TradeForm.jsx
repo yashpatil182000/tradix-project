@@ -18,7 +18,7 @@ import { ImageAttachmentField } from "@/features/trades/components/ImageAttachme
 import { LotSelector } from "@/features/trades/components/LotSelector";
 import { SegmentedControl } from "@/features/trades/components/SegmentedControl";
 import { tradeSchema } from "@/features/trades/schemas/tradeSchemas";
-import { calculateTradeMetrics } from "@/features/trades/utils/tradeCalculations";
+import { calculateTradeMetrics } from "@/lib/calculations";
 import {
   getLastTradeDirection,
   getLastTradeStyle,
@@ -188,6 +188,7 @@ export function TradeForm({
     exitPrice,
     fees,
     status,
+    instrumentId,
   ] = useWatch({
     control,
     name: [
@@ -199,25 +200,16 @@ export function TradeForm({
       "exit_price",
       "fees",
       "status",
+      "instrument_id",
     ],
   });
 
-  const metrics = useMemo(
-    () =>
-      calculateTradeMetrics({
-        direction,
-        entry_price: entryPrice,
-        stop_loss: stopLoss,
-        take_profit: takeProfit,
-        quantity,
-        exit_price: exitPrice,
-        fees,
-      }),
-    [direction, entryPrice, exitPrice, fees, quantity, stopLoss, takeProfit],
+  const selectedInstrument = useMemo(
+    () => instruments.find((item) => item.id === instrumentId) || null,
+    [instrumentId, instruments],
   );
 
-  const capitalAfterPreview = useMemo(() => {
-    if (metrics.pnl == null) return null;
+  const metrics = useMemo(() => {
     const existingPnl = Number(initialValues?.pnl);
     const existingCapitalAfter = Number(initialValues?.capital_after);
     const baseCapital =
@@ -226,8 +218,34 @@ export function TradeForm({
       Number.isFinite(existingPnl)
         ? existingCapitalAfter - existingPnl
         : Number(currentCapital) || 0;
-    return baseCapital + metrics.pnl;
-  }, [currentCapital, initialValues, metrics.pnl]);
+
+    return calculateTradeMetrics({
+      instrument: selectedInstrument,
+      direction,
+      entry_price: entryPrice,
+      stop_loss: stopLoss,
+      target: takeProfit,
+      take_profit: takeProfit,
+      lot_size: quantity,
+      quantity,
+      exit_price: exitPrice,
+      fees,
+      current_capital: baseCapital,
+    });
+  }, [
+    currentCapital,
+    direction,
+    entryPrice,
+    exitPrice,
+    fees,
+    initialValues,
+    quantity,
+    selectedInstrument,
+    stopLoss,
+    takeProfit,
+  ]);
+
+  const capitalAfterPreview = metrics.capital_after;
 
   const activeInstruments = instruments.filter(
     (item) => item.is_active !== false,

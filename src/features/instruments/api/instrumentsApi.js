@@ -1,7 +1,9 @@
 export {
   getInstruments,
   getInstrumentById,
-  createInstrument,
-  updateInstrument,
-  deleteInstrument,
+  getMasterInstrumentsCatalog,
+  enableInstrument,
+  disableInstrument,
+  setInstrumentEnabled,
+  decorateInstrument,
 } from '@/services/instrumentServices'

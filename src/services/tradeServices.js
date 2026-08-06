@@ -67,13 +67,17 @@ function emptyToNull(value) {
 function buildTradePayload(payload) {
   const direction = mapDirection(payload.direction);
   const metrics = calculateTradeMetrics({
+    instrument: payload.instrument || null,
     direction,
     entry_price: payload.entry_price,
     stop_loss: payload.stop_loss,
+    target: payload.take_profit,
     take_profit: payload.take_profit,
+    lot_size: payload.quantity,
     quantity: payload.quantity,
     exit_price: payload.exit_price,
     fees: payload.fees,
+    current_capital: payload.current_capital,
   });
 
   return {
@@ -131,6 +135,21 @@ async function signImageUrls(images = []) {
   );
 }
 
+function decorateMasterInstrument(master) {
+  if (!master) return null;
+
+  return {
+    ...master,
+    name: master.display_name,
+    type: master.asset_class,
+    contract_size: Number(master.contract_size),
+    pip_size: Number(master.pip_size),
+    min_lot: Number(master.min_lot),
+    lot_step: Number(master.lot_step),
+    max_lot: Number(master.max_lot),
+  };
+}
+
 function decorateTrade(trade) {
   if (!trade) return trade;
 
@@ -138,7 +157,9 @@ function decorateTrade(trade) {
     ...trade,
     emotion: trade.emotions,
     mistakes: parseMistakes(trade.mistakes),
-    instrument: trade.instruments || null,
+    instrument: decorateMasterInstrument(
+      trade.master_instruments || trade.instruments || null,
+    ),
     images: trade.trade_images || [],
   };
 }
@@ -252,7 +273,7 @@ export async function getTrades() {
 
   const { data, error } = await supabase
     .from("trades")
-    .select("*, instruments(*), trade_images(*)")
+    .select("*, master_instruments(*), trade_images(*)")
     .eq("user_id", user.id)
     .order("entry_at", { ascending: false });
 
@@ -276,7 +297,7 @@ export async function getTradeById(id) {
 
   const { data, error } = await supabase
     .from("trades")
-    .select("*, instruments(*), trade_images(*)")
+    .select("*, master_instruments(*), trade_images(*)")
     .eq("id", id)
     .eq("user_id", user.id)
     .single();
@@ -293,7 +314,17 @@ export async function createTrade(payload, files = {}) {
   const user = await getAuthUser();
   await ensureUserProfile(user);
 
-  const body = buildTradePayload(payload);
+  let instrument = payload.instrument || null;
+  if (!instrument && payload.instrument_id) {
+    const { data: master } = await supabase
+      .from("master_instruments")
+      .select("*")
+      .eq("id", payload.instrument_id)
+      .maybeSingle();
+    instrument = decorateMasterInstrument(master);
+  }
+
+  const body = buildTradePayload({ ...payload, instrument });
 
   const { data, error } = await supabase
     .from("trades")
@@ -301,7 +332,7 @@ export async function createTrade(payload, files = {}) {
       ...body,
       user_id: user.id,
     })
-    .select("*, instruments(*), trade_images(*)")
+    .select("*, master_instruments(*), trade_images(*)")
     .single();
 
   if (error) {
@@ -318,14 +349,25 @@ export async function updateTrade(id, payload, files = {}) {
   await ensureUserProfile(user);
 
   const existing = await getTradeById(id);
-  const body = buildTradePayload(payload);
+
+  let instrument = payload.instrument || existing.instrument || null;
+  if (!instrument && payload.instrument_id) {
+    const { data: master } = await supabase
+      .from("master_instruments")
+      .select("*")
+      .eq("id", payload.instrument_id)
+      .maybeSingle();
+    instrument = decorateMasterInstrument(master);
+  }
+
+  const body = buildTradePayload({ ...payload, instrument });
 
   const { data, error } = await supabase
     .from("trades")
     .update(body)
     .eq("id", id)
     .eq("user_id", user.id)
-    .select("*, instruments(*), trade_images(*)")
+    .select("*, master_instruments(*), trade_images(*)")
     .single();
 
   if (error) {

@@ -16,7 +16,7 @@ export const CONFIG_CATEGORIES = [
     path: 'instruments',
     label: 'Instruments',
     singularLabel: 'Instrument',
-    description: 'Markets and symbols you trade.',
+    description: 'Enable markets and symbols from the master catalog.',
     storage: 'table',
     icon: BookMarked,
   },

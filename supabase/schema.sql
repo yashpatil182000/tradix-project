@@ -9,14 +9,12 @@ create extension if not exists "pgcrypto";
 -- -----------------------------------------------------------------------------
 -- Enums
 -- -----------------------------------------------------------------------------
-create type public.instrument_type as enum (
-  'stock',
+create type public.asset_class as enum (
   'forex',
+  'metals',
   'crypto',
-  'futures',
-  'options',
-  'index',
-  'other'
+  'indices',
+  'stocks'
 );
 
 create type public.trade_direction as enum ('long', 'short');
@@ -64,27 +62,62 @@ for each row
 execute function public.set_updated_at();
 
 -- -----------------------------------------------------------------------------
--- instruments
--- Symbols/markets a user can trade. Owned per user.
+-- master_instruments
+-- App-managed instrument catalog with calculation metadata.
+-- Users cannot create or edit these rows.
 -- -----------------------------------------------------------------------------
-create table public.instruments (
+create table public.master_instruments (
   id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references public.users (id) on delete cascade,
   symbol text not null,
-  name text,
-  type public.instrument_type not null default 'other',
-  exchange text,
+  display_name text not null,
+  asset_class public.asset_class not null,
+  contract_size numeric(18, 8) not null,
+  pip_size numeric(18, 8) not null,
+  price_precision integer not null default 5,
+  min_lot numeric(18, 8) not null default 0.01,
+  lot_step numeric(18, 8) not null default 0.01,
+  max_lot numeric(18, 8) not null default 100,
   is_active boolean not null default true,
   created_at timestamptz not null default timezone('utc', now()),
   updated_at timestamptz not null default timezone('utc', now()),
 
-  constraint instruments_user_symbol_key unique (user_id, symbol)
+  constraint master_instruments_symbol_key unique (symbol),
+  constraint master_instruments_contract_size_positive check (contract_size > 0),
+  constraint master_instruments_pip_size_positive check (pip_size > 0),
+  constraint master_instruments_price_precision_nonneg check (price_precision >= 0),
+  constraint master_instruments_min_lot_positive check (min_lot > 0),
+  constraint master_instruments_lot_step_positive check (lot_step > 0),
+  constraint master_instruments_max_lot_gte_min check (max_lot >= min_lot)
 );
 
-create index instruments_user_id_idx on public.instruments (user_id);
+create index master_instruments_asset_class_idx on public.master_instruments (asset_class);
+create index master_instruments_is_active_idx on public.master_instruments (is_active);
 
-create trigger instruments_set_updated_at
-before update on public.instruments
+create trigger master_instruments_set_updated_at
+before update on public.master_instruments
+for each row
+execute function public.set_updated_at();
+
+-- -----------------------------------------------------------------------------
+-- user_instruments
+-- Per-user enable/disable of master instruments.
+-- -----------------------------------------------------------------------------
+create table public.user_instruments (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references public.users (id) on delete cascade,
+  master_instrument_id uuid not null references public.master_instruments (id) on delete restrict,
+  is_enabled boolean not null default true,
+  created_at timestamptz not null default timezone('utc', now()),
+  updated_at timestamptz not null default timezone('utc', now()),
+
+  constraint user_instruments_user_master_key unique (user_id, master_instrument_id)
+);
+
+create index user_instruments_user_id_idx on public.user_instruments (user_id);
+create index user_instruments_master_instrument_id_idx on public.user_instruments (master_instrument_id);
+
+create trigger user_instruments_set_updated_at
+before update on public.user_instruments
 for each row
 execute function public.set_updated_at();
 
@@ -121,7 +154,7 @@ execute function public.set_updated_at();
 create table public.trades (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references public.users (id) on delete cascade,
-  instrument_id uuid not null references public.instruments (id) on delete restrict,
+  instrument_id uuid not null references public.master_instruments (id) on delete restrict,
   direction public.trade_direction not null,
   status public.trade_status not null default 'open',
   entry_price numeric(18, 8) not null,
@@ -258,7 +291,8 @@ execute function public.handle_new_user();
 -- =============================================================================
 
 alter table public.users enable row level security;
-alter table public.instruments enable row level security;
+alter table public.master_instruments enable row level security;
+alter table public.user_instruments enable row level security;
 alter table public.capital enable row level security;
 alter table public.trades enable row level security;
 alter table public.trade_images enable row level security;
@@ -284,28 +318,35 @@ to authenticated
 using (id = auth.uid())
 with check (id = auth.uid());
 
--- instruments
-create policy "instruments_select_own"
-on public.instruments
+-- master_instruments (read-only catalog for authenticated users)
+create policy "master_instruments_select_authenticated"
+on public.master_instruments
+for select
+to authenticated
+using (true);
+
+-- user_instruments
+create policy "user_instruments_select_own"
+on public.user_instruments
 for select
 to authenticated
 using (user_id = auth.uid());
 
-create policy "instruments_insert_own"
-on public.instruments
+create policy "user_instruments_insert_own"
+on public.user_instruments
 for insert
 to authenticated
 with check (user_id = auth.uid());
 
-create policy "instruments_update_own"
-on public.instruments
+create policy "user_instruments_update_own"
+on public.user_instruments
 for update
 to authenticated
 using (user_id = auth.uid())
 with check (user_id = auth.uid());
 
-create policy "instruments_delete_own"
-on public.instruments
+create policy "user_instruments_delete_own"
+on public.user_instruments
 for delete
 to authenticated
 using (user_id = auth.uid());
@@ -417,3 +458,42 @@ on public.user_options
 for insert
 to authenticated
 with check (user_id = auth.uid());
+
+-- =============================================================================
+-- Master instrument catalog seed (app-managed)
+-- =============================================================================
+insert into public.master_instruments (
+  symbol, display_name, asset_class, contract_size, pip_size, price_precision,
+  min_lot, lot_step, max_lot, is_active
+) values
+  ('EURUSD', 'Euro / US Dollar', 'forex', 100000, 0.0001, 5, 0.01, 0.01, 100, true),
+  ('GBPUSD', 'Pound / US Dollar', 'forex', 100000, 0.0001, 5, 0.01, 0.01, 100, true),
+  ('USDJPY', 'US Dollar / Yen', 'forex', 100000, 0.01, 3, 0.01, 0.01, 100, true),
+  ('USDCHF', 'US Dollar / Swiss Franc', 'forex', 100000, 0.0001, 5, 0.01, 0.01, 100, true),
+  ('AUDUSD', 'Australian Dollar / US Dollar', 'forex', 100000, 0.0001, 5, 0.01, 0.01, 100, true),
+  ('USDCAD', 'US Dollar / Canadian Dollar', 'forex', 100000, 0.0001, 5, 0.01, 0.01, 100, true),
+  ('NZDUSD', 'New Zealand Dollar / US Dollar', 'forex', 100000, 0.0001, 5, 0.01, 0.01, 100, true),
+  ('EURGBP', 'Euro / Pound', 'forex', 100000, 0.0001, 5, 0.01, 0.01, 100, true),
+  ('EURJPY', 'Euro / Yen', 'forex', 100000, 0.01, 3, 0.01, 0.01, 100, true),
+  ('GBPJPY', 'Pound / Yen', 'forex', 100000, 0.01, 3, 0.01, 0.01, 100, true),
+  ('GBPSNZD', 'Pound / New Zealand Dollar', 'forex', 100000, 0.0001, 5, 0.01, 0.01, 100, true),
+  ('GPBSNZD', 'Pound / New Zealand Dollar (legacy)', 'forex', 100000, 0.0001, 5, 0.01, 0.01, 100, true),
+  ('XAUUSD', 'Gold / US Dollar', 'metals', 100, 0.01, 2, 0.01, 0.01, 50, true),
+  ('XAGUSD', 'Silver / US Dollar', 'metals', 5000, 0.001, 3, 0.01, 0.01, 50, true),
+  ('BTCUSD', 'Bitcoin / US Dollar', 'crypto', 1, 0.01, 2, 0.001, 0.001, 50, true),
+  ('ETHUSD', 'Ethereum / US Dollar', 'crypto', 1, 0.01, 2, 0.01, 0.01, 100, true),
+  ('SOLUSD', 'Solana / US Dollar', 'crypto', 1, 0.001, 3, 0.1, 0.1, 500, true),
+  ('NAS100', 'Nasdaq 100', 'indices', 1, 0.1, 1, 0.1, 0.1, 100, true),
+  ('US100', 'US 100', 'indices', 1, 0.1, 1, 0.1, 0.1, 100, true),
+  ('US30', 'Dow Jones 30', 'indices', 1, 1, 0, 0.1, 0.1, 100, true),
+  ('SPX500', 'S&P 500', 'indices', 1, 0.1, 1, 0.1, 0.1, 100, true),
+  ('GER40', 'Germany 40', 'indices', 1, 0.1, 1, 0.1, 0.1, 100, true),
+  ('UK100', 'UK 100', 'indices', 1, 0.1, 1, 0.1, 0.1, 100, true),
+  ('AAPL', 'Apple Inc.', 'stocks', 1, 0.01, 2, 1, 1, 10000, true),
+  ('TSLA', 'Tesla Inc.', 'stocks', 1, 0.01, 2, 1, 1, 10000, true),
+  ('MSFT', 'Microsoft Corp.', 'stocks', 1, 0.01, 2, 1, 1, 10000, true),
+  ('AMZN', 'Amazon.com Inc.', 'stocks', 1, 0.01, 2, 1, 1, 10000, true),
+  ('NVDA', 'NVIDIA Corp.', 'stocks', 1, 0.01, 2, 1, 1, 10000, true),
+  ('GOOGL', 'Alphabet Inc.', 'stocks', 1, 0.01, 2, 1, 1, 10000, true),
+  ('META', 'Meta Platforms Inc.', 'stocks', 1, 0.01, 2, 1, 1, 10000, true)
+on conflict (symbol) do nothing;

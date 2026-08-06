@@ -6,28 +6,37 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import { ASSET_CLASS_LABELS } from '@/features/instruments/schemas/instrumentSchemas'
 
-function StatusBadge({ isActive }) {
+function StatusBadge({ isEnabled }) {
   return (
     <span
       className={
-        isActive
+        isEnabled
           ? 'inline-flex rounded-md bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground'
           : 'inline-flex rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground'
       }
     >
-      {isActive ? 'Active' : 'Inactive'}
+      {isEnabled ? 'Enabled' : 'Disabled'}
     </span>
   )
 }
 
-export function InstrumentList({ instruments, onEdit, onDelete }) {
+function formatAssetClass(assetClass) {
+  return ASSET_CLASS_LABELS[assetClass] || assetClass || '—'
+}
+
+export function InstrumentList({
+  instruments,
+  onToggle,
+  togglingId = null,
+}) {
   if (!instruments.length) {
     return (
       <div className="rounded-xl border border-dashed px-4 py-12 text-center">
-        <p className="text-sm font-medium">No instruments yet</p>
+        <p className="text-sm font-medium">No instruments found</p>
         <p className="mt-1 text-sm text-muted-foreground">
-          Create your first instrument to start journaling trades.
+          Try a different search, or check back when more markets are added.
         </p>
       </div>
     )
@@ -36,101 +45,116 @@ export function InstrumentList({ instruments, onEdit, onDelete }) {
   return (
     <>
       <div className="grid gap-3 md:hidden">
-        {instruments.map((instrument) => (
-          <Card key={instrument.id} size="sm">
-            <CardHeader className="gap-2">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <CardTitle>{instrument.symbol}</CardTitle>
-                  <CardDescription>
-                    {instrument.name || 'Untitled instrument'}
-                  </CardDescription>
+        {instruments.map((instrument) => {
+          const isEnabled = instrument.is_enabled === true
+          const isBusy = togglingId === instrument.id
+
+          return (
+            <Card key={instrument.id} size="sm">
+              <CardHeader className="gap-2">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <CardTitle>{instrument.symbol}</CardTitle>
+                    <CardDescription>
+                      {instrument.display_name || instrument.name || '—'}
+                    </CardDescription>
+                  </div>
+                  <StatusBadge isEnabled={isEnabled} />
                 </div>
-                <StatusBadge isActive={instrument.is_active} />
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                <div>
-                  <p className="text-muted-foreground">Type</p>
-                  <p className="capitalize">{instrument.type}</p>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div>
+                    <p className="text-muted-foreground">Asset class</p>
+                    <p>{formatAssetClass(instrument.asset_class)}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Contract size</p>
+                    <p>{instrument.contract_size}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Pip size</p>
+                    <p>{instrument.pip_size}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Lot range</p>
+                    <p>
+                      {instrument.min_lot} – {instrument.max_lot}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-muted-foreground">Exchange</p>
-                  <p>{instrument.exchange || '—'}</p>
-                </div>
-              </div>
-              <div className="flex gap-2">
                 <Button
                   type="button"
-                  variant="outline"
+                  variant={isEnabled ? 'outline' : 'default'}
                   size="sm"
-                  className="flex-1"
-                  onClick={() => onEdit(instrument)}
+                  className="w-full"
+                  disabled={isBusy}
+                  onClick={() => onToggle(instrument, !isEnabled)}
                 >
-                  Edit
+                  {isBusy
+                    ? 'Updating...'
+                    : isEnabled
+                      ? 'Disable'
+                      : 'Enable'}
                 </Button>
-                <Button
-                  type="button"
-                  variant="destructive"
-                  size="sm"
-                  className="flex-1"
-                  onClick={() => onDelete(instrument)}
-                >
-                  Delete
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+              </CardContent>
+            </Card>
+          )
+        })}
       </div>
 
       <div className="hidden overflow-x-auto rounded-xl border md:block">
-        <table className="w-full min-w-[640px] text-left text-sm">
+        <table className="w-full min-w-[720px] text-left text-sm">
           <thead className="border-b bg-muted/40">
             <tr>
               <th className="px-4 py-3 font-medium">Symbol</th>
               <th className="px-4 py-3 font-medium">Name</th>
-              <th className="px-4 py-3 font-medium">Type</th>
-              <th className="px-4 py-3 font-medium">Exchange</th>
+              <th className="px-4 py-3 font-medium">Asset class</th>
+              <th className="px-4 py-3 font-medium">Contract</th>
+              <th className="px-4 py-3 font-medium">Pip</th>
               <th className="px-4 py-3 font-medium">Status</th>
               <th className="px-4 py-3 font-medium text-right">Actions</th>
             </tr>
           </thead>
           <tbody>
-            {instruments.map((instrument) => (
-              <tr key={instrument.id} className="border-b last:border-b-0">
-                <td className="px-4 py-3 font-medium">{instrument.symbol}</td>
-                <td className="px-4 py-3 text-muted-foreground">
-                  {instrument.name || '—'}
-                </td>
-                <td className="px-4 py-3 capitalize">{instrument.type}</td>
-                <td className="px-4 py-3">{instrument.exchange || '—'}</td>
-                <td className="px-4 py-3">
-                  <StatusBadge isActive={instrument.is_active} />
-                </td>
-                <td className="px-4 py-3">
-                  <div className="flex justify-end gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => onEdit(instrument)}
-                    >
-                      Edit
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => onDelete(instrument)}
-                    >
-                      Delete
-                    </Button>
-                  </div>
-                </td>
-              </tr>
-            ))}
+            {instruments.map((instrument) => {
+              const isEnabled = instrument.is_enabled === true
+              const isBusy = togglingId === instrument.id
+
+              return (
+                <tr key={instrument.id} className="border-b last:border-b-0">
+                  <td className="px-4 py-3 font-medium">{instrument.symbol}</td>
+                  <td className="px-4 py-3 text-muted-foreground">
+                    {instrument.display_name || instrument.name || '—'}
+                  </td>
+                  <td className="px-4 py-3">
+                    {formatAssetClass(instrument.asset_class)}
+                  </td>
+                  <td className="px-4 py-3">{instrument.contract_size}</td>
+                  <td className="px-4 py-3">{instrument.pip_size}</td>
+                  <td className="px-4 py-3">
+                    <StatusBadge isEnabled={isEnabled} />
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex justify-end">
+                      <Button
+                        type="button"
+                        variant={isEnabled ? 'outline' : 'default'}
+                        size="sm"
+                        disabled={isBusy}
+                        onClick={() => onToggle(instrument, !isEnabled)}
+                      >
+                        {isBusy
+                          ? 'Updating...'
+                          : isEnabled
+                            ? 'Disable'
+                            : 'Enable'}
+                      </Button>
+                    </div>
+                  </td>
+                </tr>
+              )
+            })}
           </tbody>
         </table>
       </div>

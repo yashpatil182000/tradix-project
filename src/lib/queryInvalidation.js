@@ -38,6 +38,7 @@ export function invalidateInstrumentRelatedQueries(queryClient, instrumentId) {
       queryKey: ['instruments', 'detail', instrumentId],
     })
   }
+  queryClient.invalidateQueries({ queryKey: ['instruments', 'catalog'] })
 }
 
 export function invalidateSettingsRelatedQueries(queryClient) {

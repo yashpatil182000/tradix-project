@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import {
@@ -22,6 +23,25 @@ export function EditTradePage() {
   const capitalQuery = useCapitalSummary()
 
   const trade = tradeQuery.data
+  const instruments = useMemo(() => {
+    const list = instrumentsQuery.data || []
+    if (
+      trade?.instrument &&
+      !list.some((item) => item.id === trade.instrument_id)
+    ) {
+      return [
+        ...list,
+        {
+          ...trade.instrument,
+          id: trade.instrument_id,
+          is_active: true,
+          is_enabled: true,
+        },
+      ]
+    }
+    return list
+  }, [instrumentsQuery.data, trade])
+
   const isLoading =
     tradeQuery.isLoading ||
     instrumentsQuery.isLoading ||
@@ -90,7 +110,7 @@ export function EditTradePage() {
           pnl: trade.pnl,
           capital_after: trade.capital_after,
         }}
-        instruments={instrumentsQuery.data || []}
+        instruments={instruments}
         configOptions={settingsQuery.data?.preferences || {}}
         existingImages={trade.images || []}
         currentCapital={capitalQuery.summary.currentCapital}
