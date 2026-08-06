@@ -2,6 +2,10 @@ import { useMemo, useState } from 'react'
 import { Download, FileSpreadsheet, Printer } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
+import {
+  PageError,
+  PageSkeleton,
+} from '@/components/shared/PageStates'
 import { ReportFilters } from '@/features/reports/components/ReportFilters'
 import { ReportPreview } from '@/features/reports/components/ReportPreview'
 import { ReportTypeSelector } from '@/features/reports/components/ReportTypeSelector'
@@ -10,8 +14,6 @@ import {
   buildReport,
   EMPTY_REPORT_FILTERS,
 } from '@/features/reports/utils/buildReport'
-import { exportReportToExcel } from '@/features/reports/utils/exportReportExcel'
-import { exportReportToPdf } from '@/features/reports/utils/exportReportPdf'
 import { toInputDate } from '@/features/reports/utils/reportPeriods'
 import { useInstruments } from '@/features/instruments/hooks/useInstruments'
 import { useSettings } from '@/features/settings/hooks/useSettings'
@@ -28,6 +30,7 @@ export function ReportsPage() {
   )
   const [customTo, setCustomTo] = useState(toInputDate())
   const [filters, setFilters] = useState(EMPTY_REPORT_FILTERS)
+  const [exporting, setExporting] = useState(null)
 
   const report = useMemo(() => {
     if (!data) return null
@@ -45,47 +48,47 @@ export function ReportsPage() {
     window.print()
   }
 
-  function handleExcel() {
+  async function handleExcel() {
     if (!report) return
+    setExporting('excel')
     try {
+      const { exportReportToExcel } = await import(
+        '@/features/reports/utils/exportReportExcel'
+      )
       exportReportToExcel(report)
       toast.success('Excel report downloaded')
     } catch (exportError) {
       toast.error(exportError.message || 'Unable to export Excel')
+    } finally {
+      setExporting(null)
     }
   }
 
-  function handlePdf() {
+  async function handlePdf() {
     if (!report) return
+    setExporting('pdf')
     try {
+      const { exportReportToPdf } = await import(
+        '@/features/reports/utils/exportReportPdf'
+      )
       exportReportToPdf(report)
       toast.success('PDF report downloaded')
     } catch (exportError) {
       toast.error(exportError.message || 'Unable to export PDF')
+    } finally {
+      setExporting(null)
     }
   }
 
-  if (isLoading) {
-    return (
-      <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6">
-        <div className="rounded-card border border-border px-4 py-12 text-center text-sm text-muted-foreground">
-          Loading reports...
-        </div>
-      </div>
-    )
-  }
+  if (isLoading) return <PageSkeleton />
 
   if (isError || !report) {
     return (
       <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6">
-        <div className="rounded-card border border-destructive/30 px-4 py-12 text-center">
-          <p className="text-sm text-destructive">
-            {error?.message || 'Unable to load reports'}
-          </p>
-          <Button className="mt-4" variant="outline" onClick={() => refetch()}>
-            Try again
-          </Button>
-        </div>
+        <PageError
+          message={error?.message || 'Unable to load reports'}
+          onRetry={() => refetch()}
+        />
       </div>
     )
   }
@@ -104,13 +107,22 @@ export function ReportsPage() {
             <Printer className="size-4" />
             Print
           </Button>
-          <Button type="button" variant="outline" onClick={handleExcel}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleExcel}
+            disabled={Boolean(exporting)}
+          >
             <FileSpreadsheet className="size-4" />
-            Export Excel
+            {exporting === 'excel' ? 'Exporting...' : 'Export Excel'}
           </Button>
-          <Button type="button" onClick={handlePdf}>
+          <Button
+            type="button"
+            onClick={handlePdf}
+            disabled={Boolean(exporting)}
+          >
             <Download className="size-4" />
-            Export PDF
+            {exporting === 'pdf' ? 'Exporting...' : 'Export PDF'}
           </Button>
         </div>
       </div>

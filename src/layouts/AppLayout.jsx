@@ -1,6 +1,7 @@
 import { Link, NavLink, Outlet } from 'react-router-dom'
 import { PanelLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { SkipLink } from '@/components/shared/PageStates'
 import { ThemeToggle } from '@/components/shared/ThemeToggle'
 import {
   AppContent,
@@ -27,19 +28,24 @@ function SidebarNav() {
   const { collapsed } = useSidebar()
 
   return (
-    <nav className="flex flex-1 flex-col gap-1 p-2">
+    <nav className="flex flex-1 flex-col gap-1 p-2" aria-label="Primary">
       {navItems.map((item) => (
         <NavLink
           key={item.to}
           to={item.to}
           data-nav-item="true"
+          aria-label={item.label}
+          title={item.label}
           className={cn(
             'rounded-control px-3 py-2 text-sm font-medium transition-colors',
             collapsed && 'px-0 text-center',
           )}
-          title={item.label}
         >
-          {collapsed ? item.label.charAt(0) : item.label}
+          {collapsed ? (
+            <span aria-hidden="true">{item.label.charAt(0)}</span>
+          ) : (
+            item.label
+          )}
         </NavLink>
       ))}
     </nav>
@@ -48,7 +54,7 @@ function SidebarNav() {
 
 function HeaderActions() {
   const { user, logout } = useUser()
-  const { toggle } = useSidebar()
+  const { toggle, collapsed } = useSidebar()
 
   return (
     <>
@@ -58,7 +64,8 @@ function HeaderActions() {
         size="icon"
         className="hidden md:inline-flex"
         onClick={toggle}
-        aria-label="Toggle sidebar"
+        aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+        aria-expanded={!collapsed}
       >
         <PanelLeft className="size-4" />
       </Button>
@@ -83,6 +90,7 @@ function HeaderActions() {
 export function AppLayout() {
   return (
     <AppShell>
+      <SkipLink />
       <AppSidebar>
         <div className="flex h-14 items-center border-b border-sidebar-border px-4">
           <span className="text-heading-4">Tradix</span>
@@ -95,7 +103,10 @@ export function AppLayout() {
           <HeaderActions />
         </AppHeader>
 
-        <div className="flex gap-1 overflow-x-auto border-b border-border px-4 py-2 md:hidden">
+        <nav
+          className="flex gap-1 overflow-x-auto border-b border-border px-4 py-2 md:hidden"
+          aria-label="Primary"
+        >
           {navItems.map((item) => (
             <NavLink
               key={item.to}
@@ -112,11 +123,11 @@ export function AppLayout() {
               {item.label}
             </NavLink>
           ))}
-        </div>
+        </nav>
 
-        <div className="min-h-0 flex-1">
+        <main id="main-content" className="min-h-0 flex-1" tabIndex={-1}>
           <Outlet />
-        </div>
+        </main>
       </AppContent>
     </AppShell>
   )

@@ -1,4 +1,8 @@
 import { useMemo, useState } from 'react'
+import {
+  ListPageSkeleton,
+  PageError,
+} from '@/components/shared/PageStates'
 import { Button } from '@/components/ui/button'
 import { AddCapitalTransactionDialog } from '@/features/capital/components/AddCapitalTransactionDialog'
 import { CapitalFilters } from '@/features/capital/components/CapitalFilters'
@@ -75,26 +79,13 @@ export function CapitalPage() {
         </div>
       </div>
 
-      {isLoading ? (
-        <div className="rounded-card border border-border px-4 py-12 text-center text-sm text-muted-foreground">
-          Loading capital history...
-        </div>
-      ) : null}
+      {isLoading ? <ListPageSkeleton className="px-0 py-0" /> : null}
 
       {isError ? (
-        <div className="rounded-card border border-destructive/30 px-4 py-8 text-center">
-          <p className="text-sm text-destructive">
-            {error?.message || 'Failed to load capital history'}
-          </p>
-          <Button
-            type="button"
-            variant="outline"
-            className="mt-4"
-            onClick={() => refetch()}
-          >
-            Try again
-          </Button>
-        </div>
+        <PageError
+          message={error?.message || 'Failed to load capital history'}
+          onRetry={() => refetch()}
+        />
       ) : null}
 
       {!isLoading && !isError ? (

@@ -1,5 +1,9 @@
 import { useNavigate, useParams } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
+import {
+  FormPageSkeleton,
+  PageError,
+} from '@/components/shared/PageStates'
 import { TradeForm } from '@/features/trades/components/TradeForm'
 import { useTrade, useUpdateTrade } from '@/features/trades/hooks/useTrades'
 import { useInstruments } from '@/features/instruments/hooks/useInstruments'
@@ -11,11 +15,18 @@ import { ROUTES } from '@/routes/paths'
 export function EditTradePage() {
   const { tradeId } = useParams()
   const navigate = useNavigate()
-  const { data: trade, isLoading, isError, error } = useTrade(tradeId)
+  const tradeQuery = useTrade(tradeId)
   const updateTrade = useUpdateTrade()
-  const { data: instruments = [] } = useInstruments()
-  const { data: settings } = useSettings()
-  const { summary } = useCapitalSummary()
+  const instrumentsQuery = useInstruments()
+  const settingsQuery = useSettings()
+  const capitalQuery = useCapitalSummary()
+
+  const trade = tradeQuery.data
+  const isLoading =
+    tradeQuery.isLoading ||
+    instrumentsQuery.isLoading ||
+    settingsQuery.isLoading ||
+    capitalQuery.isLoading
 
   async function handleSubmit(payload, files) {
     const updated = await updateTrade.mutateAsync({
@@ -26,21 +37,20 @@ export function EditTradePage() {
     navigate(`${ROUTES.TRADE_JOURNAL}/${updated.id}`)
   }
 
-  if (isLoading) {
-    return (
-      <div className="px-4 py-12 text-center text-sm text-muted-foreground">
-        Loading trade...
-      </div>
-    )
-  }
+  if (isLoading) return <FormPageSkeleton />
 
-  if (isError || !trade) {
+  if (tradeQuery.isError || !trade) {
     return (
-      <div className="px-4 py-12 text-center">
-        <p className="text-sm text-destructive">{error?.message || 'Trade not found'}</p>
-        <Button className="mt-4" variant="outline" onClick={() => navigate(ROUTES.TRADE_JOURNAL)}>
-          Back to journal
-        </Button>
+      <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6">
+        <PageError
+          message={tradeQuery.error?.message || 'Trade not found'}
+          onRetry={() => tradeQuery.refetch()}
+        />
+        <div className="mt-4 text-center">
+          <Button variant="outline" onClick={() => navigate(ROUTES.TRADE_JOURNAL)}>
+            Back to journal
+          </Button>
+        </div>
       </div>
     )
   }
@@ -74,14 +84,16 @@ export function EditTradePage() {
           exit_reason: trade.exit_reason ?? '',
           followed_rules: Boolean(trade.followed_rules),
           lesson_learned: trade.lesson_learned ?? '',
-          exit_at: trade.exit_at ? toDateTimeLocalValue(new Date(trade.exit_at)) : '',
+          exit_at: trade.exit_at
+            ? toDateTimeLocalValue(new Date(trade.exit_at))
+            : '',
           pnl: trade.pnl,
           capital_after: trade.capital_after,
         }}
-        instruments={instruments}
-        configOptions={settings?.preferences || {}}
+        instruments={instrumentsQuery.data || []}
+        configOptions={settingsQuery.data?.preferences || {}}
         existingImages={trade.images || []}
-        currentCapital={summary.currentCapital}
+        currentCapital={capitalQuery.summary.currentCapital}
         submitLabel="Save trade"
         isSubmitting={updateTrade.isPending}
         onCancel={() => navigate(`${ROUTES.TRADE_JOURNAL}/${trade.id}`)}

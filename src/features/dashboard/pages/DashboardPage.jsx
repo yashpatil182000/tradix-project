@@ -1,4 +1,7 @@
-import { Button } from '@/components/ui/button'
+import {
+  PageError,
+  PageSkeleton,
+} from '@/components/shared/PageStates'
 import { DashboardCharts } from '@/features/dashboard/components/DashboardCharts'
 import { DashboardMetricCards } from '@/features/dashboard/components/DashboardMetricCards'
 import { OpenTradesCard } from '@/features/dashboard/components/OpenTradesCard'
@@ -9,27 +12,15 @@ import { useDashboard } from '@/features/dashboard/hooks/useDashboard'
 export function DashboardPage() {
   const { data, isLoading, isError, error, refetch } = useDashboard()
 
-  if (isLoading) {
-    return (
-      <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6">
-        <div className="rounded-card border border-border px-4 py-12 text-center text-sm text-muted-foreground">
-          Loading dashboard...
-        </div>
-      </div>
-    )
-  }
+  if (isLoading) return <PageSkeleton />
 
   if (isError) {
     return (
       <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6">
-        <div className="rounded-card border border-destructive/30 px-4 py-12 text-center">
-          <p className="text-sm text-destructive">
-            {error?.message || 'Unable to load dashboard'}
-          </p>
-          <Button className="mt-4" variant="outline" onClick={() => refetch()}>
-            Try again
-          </Button>
-        </div>
+        <PageError
+          message={error?.message || 'Unable to load dashboard'}
+          onRetry={() => refetch()}
+        />
       </div>
     )
   }

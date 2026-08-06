@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
+import { invalidateSettingsRelatedQueries } from '@/lib/queryInvalidation'
 import {
   createConfigOption,
   deleteConfigOption,
@@ -77,7 +78,7 @@ export function useCreateConfigOption(categoryKey) {
       toast.success('Item created')
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: settingsKeys.detail() })
+      invalidateSettingsRelatedQueries(queryClient)
     },
   })
 }
@@ -129,7 +130,7 @@ export function useUpdateConfigOption(categoryKey) {
       toast.success('Item updated')
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: settingsKeys.detail() })
+      invalidateSettingsRelatedQueries(queryClient)
     },
   })
 }
@@ -168,7 +169,7 @@ export function useDeleteConfigOption(categoryKey) {
       toast.success('Item deleted')
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: settingsKeys.detail() })
+      invalidateSettingsRelatedQueries(queryClient)
     },
   })
 }

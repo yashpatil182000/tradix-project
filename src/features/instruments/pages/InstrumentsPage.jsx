@@ -1,4 +1,8 @@
 import { useState } from 'react'
+import {
+  ListPageSkeleton,
+  PageError,
+} from '@/components/shared/PageStates'
 import { Button } from '@/components/ui/button'
 import { CreateInstrumentDialog } from '@/features/instruments/components/CreateInstrumentDialog'
 import { DeleteInstrumentDialog } from '@/features/instruments/components/DeleteInstrumentDialog'
@@ -27,26 +31,13 @@ export function InstrumentsPage() {
         </Button>
       </div>
 
-      {isLoading ? (
-        <div className="rounded-card border border-border px-4 py-12 text-center text-sm text-muted-foreground">
-          Loading instruments...
-        </div>
-      ) : null}
+      {isLoading ? <ListPageSkeleton className="px-0 py-0" /> : null}
 
       {isError ? (
-        <div className="rounded-card border border-destructive/30 px-4 py-8 text-center">
-          <p className="text-sm text-destructive">
-            {error?.message || 'Failed to load instruments'}
-          </p>
-          <Button
-            type="button"
-            variant="outline"
-            className="mt-4"
-            onClick={() => refetch()}
-          >
-            Try again
-          </Button>
-        </div>
+        <PageError
+          message={error?.message || 'Failed to load instruments'}
+          onRetry={() => refetch()}
+        />
       ) : null}
 
       {!isLoading && !isError ? (

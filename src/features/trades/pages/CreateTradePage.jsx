@@ -1,4 +1,8 @@
 import { useNavigate } from 'react-router-dom'
+import {
+  FormPageSkeleton,
+  PageError,
+} from '@/components/shared/PageStates'
 import { TradeForm } from '@/features/trades/components/TradeForm'
 import { useCreateTrade } from '@/features/trades/hooks/useTrades'
 import { useInstruments } from '@/features/instruments/hooks/useInstruments'
@@ -9,13 +13,42 @@ import { ROUTES } from '@/routes/paths'
 export function CreateTradePage() {
   const navigate = useNavigate()
   const createTrade = useCreateTrade()
-  const { data: instruments = [] } = useInstruments()
-  const { data: settings } = useSettings()
-  const { summary } = useCapitalSummary()
+  const instrumentsQuery = useInstruments()
+  const settingsQuery = useSettings()
+  const capitalQuery = useCapitalSummary()
+
+  const isLoading =
+    instrumentsQuery.isLoading ||
+    settingsQuery.isLoading ||
+    capitalQuery.isLoading
+  const isError =
+    instrumentsQuery.isError || settingsQuery.isError || capitalQuery.isError
 
   async function handleSubmit(payload, files) {
     const trade = await createTrade.mutateAsync({ payload, files })
     navigate(`${ROUTES.TRADE_JOURNAL}/${trade.id}`)
+  }
+
+  if (isLoading) return <FormPageSkeleton />
+
+  if (isError) {
+    return (
+      <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6">
+        <PageError
+          message={
+            instrumentsQuery.error?.message ||
+            settingsQuery.error?.message ||
+            capitalQuery.error?.message ||
+            'Unable to load trade form'
+          }
+          onRetry={() => {
+            instrumentsQuery.refetch()
+            settingsQuery.refetch()
+            capitalQuery.refetch()
+          }}
+        />
+      </div>
+    )
   }
 
   return (
@@ -28,9 +61,9 @@ export function CreateTradePage() {
       </div>
 
       <TradeForm
-        instruments={instruments}
-        configOptions={settings?.preferences || {}}
-        currentCapital={summary.currentCapital}
+        instruments={instrumentsQuery.data || []}
+        configOptions={settingsQuery.data?.preferences || {}}
+        currentCapital={capitalQuery.summary.currentCapital}
         submitLabel="Save trade"
         isSubmitting={createTrade.isPending}
         onCancel={() => navigate(ROUTES.TRADE_JOURNAL)}

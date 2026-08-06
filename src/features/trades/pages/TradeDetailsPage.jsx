@@ -9,6 +9,10 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import {
+  FormPageSkeleton,
+  PageError,
+} from '@/components/shared/PageStates'
 import { DeleteTradeDialog } from '@/features/trades/components/DeleteTradeDialog'
 import { useTrade } from '@/features/trades/hooks/useTrades'
 import { formatCurrency, formatDateTime } from '@/features/capital/utils/formatCapital'
@@ -26,24 +30,23 @@ function DetailItem({ label, value, className }) {
 export function TradeDetailsPage() {
   const { tradeId } = useParams()
   const navigate = useNavigate()
-  const { data: trade, isLoading, isError, error } = useTrade(tradeId)
+  const { data: trade, isLoading, isError, error, refetch } = useTrade(tradeId)
   const [deleteOpen, setDeleteOpen] = useState(false)
 
-  if (isLoading) {
-    return (
-      <div className="px-4 py-12 text-center text-sm text-muted-foreground">
-        Loading trade...
-      </div>
-    )
-  }
+  if (isLoading) return <FormPageSkeleton />
 
   if (isError || !trade) {
     return (
-      <div className="px-4 py-12 text-center">
-        <p className="text-sm text-destructive">{error?.message || 'Trade not found'}</p>
-        <Button className="mt-4" variant="outline" onClick={() => navigate(ROUTES.TRADE_JOURNAL)}>
-          Back to journal
-        </Button>
+      <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6">
+        <PageError
+          message={error?.message || 'Trade not found'}
+          onRetry={() => refetch()}
+        />
+        <div className="mt-4 text-center">
+          <Button variant="outline" onClick={() => navigate(ROUTES.TRADE_JOURNAL)}>
+            Back to journal
+          </Button>
+        </div>
       </div>
     )
   }
@@ -75,6 +78,7 @@ export function TradeDetailsPage() {
           </Button>
         </div>
       </div>
+
 
       <div className="grid gap-4 xl:grid-cols-[1.4fr_0.8fr]">
         <Card>
@@ -145,7 +149,11 @@ export function TradeDetailsPage() {
                   <img
                     src={beforeImage.url}
                     alt="Before trade screenshot"
-                    className="max-h-64 w-full rounded-card border border-border object-cover"
+                    width={800}
+                    height={450}
+                    loading="lazy"
+                    decoding="async"
+                    className="aspect-video max-h-64 w-full rounded-card border border-border object-cover"
                   />
                 ) : (
                   <p className="text-sm text-muted-foreground">No before screenshot</p>
@@ -157,7 +165,11 @@ export function TradeDetailsPage() {
                   <img
                     src={afterImage.url}
                     alt="After trade screenshot"
-                    className="max-h-64 w-full rounded-card border border-border object-cover"
+                    width={800}
+                    height={450}
+                    loading="lazy"
+                    decoding="async"
+                    className="aspect-video max-h-64 w-full rounded-card border border-border object-cover"
                   />
                 ) : (
                   <p className="text-sm text-muted-foreground">No after screenshot</p>

@@ -8,6 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import { EmptyState } from '@/components/shared/PageStates'
 import { formatCurrency, formatDateTime } from '@/features/capital/utils/formatCapital'
 import { ROUTES } from '@/routes/paths'
 
@@ -20,12 +21,15 @@ const statusVariant = {
 export function TradeList({ trades, onDelete }) {
   if (!trades.length) {
     return (
-      <div className="rounded-card border border-dashed border-border px-4 py-12 text-center">
-        <p className="text-sm font-medium">No trades yet</p>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Create your first journal entry to start tracking performance.
-        </p>
-      </div>
+      <EmptyState
+        title="No trades yet"
+        description="Create your first journal entry to start tracking performance."
+        action={
+          <Button asChild>
+            <Link to={`${ROUTES.TRADE_JOURNAL}/new`}>Create trade</Link>
+          </Button>
+        }
+      />
     )
   }
 

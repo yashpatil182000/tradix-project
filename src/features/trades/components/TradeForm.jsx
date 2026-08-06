@@ -341,7 +341,7 @@ export function TradeForm({
               )}
             />
             {errors.entry_at ? (
-              <p className="text-sm text-destructive">
+              <p id="entry_at-error" className="text-sm text-destructive" role="alert">
                 {errors.entry_at.message}
               </p>
             ) : null}
@@ -363,6 +363,10 @@ export function TradeForm({
                   <SelectTrigger
                     data-focus-name="instrument_id"
                     className="h-11 w-full"
+                    aria-invalid={Boolean(errors.instrument_id)}
+                    aria-describedby={
+                      errors.instrument_id ? "instrument_id-error" : undefined
+                    }
                   >
                     <SelectValue placeholder="Select instrument" />
                   </SelectTrigger>
@@ -377,7 +381,11 @@ export function TradeForm({
               )}
             />
             {errors.instrument_id ? (
-              <p className="text-sm text-destructive">
+              <p
+                id="instrument_id-error"
+                className="text-sm text-destructive"
+                role="alert"
+              >
                 {errors.instrument_id.message}
               </p>
             ) : null}
@@ -462,11 +470,19 @@ export function TradeForm({
               data-focus-name="entry_price"
               className="h-11 scroll-mt-28"
               enterKeyHint="next"
+              aria-invalid={Boolean(errors.entry_price)}
+              aria-describedby={
+                errors.entry_price ? "entry_price-error" : undefined
+              }
               onKeyDown={(event) => handleEnter(event, "entry_price")}
               {...register("entry_price")}
             />
             {errors.entry_price ? (
-              <p className="text-sm text-destructive">
+              <p
+                id="entry_price-error"
+                className="text-sm text-destructive"
+                role="alert"
+              >
                 {errors.entry_price.message}
               </p>
             ) : null}
@@ -520,6 +536,10 @@ export function TradeForm({
                   data-focus-name="exit_price"
                   className="h-11 scroll-mt-28"
                   enterKeyHint="next"
+                  aria-invalid={Boolean(errors.exit_price)}
+                  aria-describedby={
+                    errors.exit_price ? "exit_price-error" : undefined
+                  }
                   value={field.value ?? ""}
                   onChange={(event) => {
                     exitTouchedRef.current = true;
@@ -530,7 +550,11 @@ export function TradeForm({
               )}
             />
             {errors.exit_price ? (
-              <p className="text-sm text-destructive">
+              <p
+                id="exit_price-error"
+                className="text-sm text-destructive"
+                role="alert"
+              >
                 {errors.exit_price.message}
               </p>
             ) : null}

@@ -6,6 +6,7 @@ import {
   getInstruments,
   updateInstrument,
 } from '@/features/instruments/api/instrumentsApi'
+import { invalidateInstrumentRelatedQueries } from '@/lib/queryInvalidation'
 
 export const instrumentKeys = {
   all: ['instruments'],
@@ -36,7 +37,7 @@ export function useCreateInstrument() {
   return useMutation({
     mutationFn: createInstrument,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: instrumentKeys.lists() })
+      invalidateInstrumentRelatedQueries(queryClient)
     },
   })
 }
@@ -47,12 +48,7 @@ export function useUpdateInstrument() {
   return useMutation({
     mutationFn: ({ id, payload }) => updateInstrument(id, payload),
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: instrumentKeys.lists() })
-      if (data?.id) {
-        queryClient.invalidateQueries({
-          queryKey: instrumentKeys.detail(data.id),
-        })
-      }
+      invalidateInstrumentRelatedQueries(queryClient, data?.id)
     },
   })
 }
@@ -63,7 +59,7 @@ export function useDeleteInstrument() {
   return useMutation({
     mutationFn: deleteInstrument,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: instrumentKeys.lists() })
+      invalidateInstrumentRelatedQueries(queryClient)
     },
   })
 }

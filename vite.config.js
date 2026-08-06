@@ -6,7 +6,6 @@ import { defineConfig } from "vite";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-// https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   resolve: {
@@ -16,5 +15,29 @@ export default defineConfig({
   },
   server: {
     host: true,
+  },
+  build: {
+    chunkSizeWarningLimit: 900,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes("node_modules")) return undefined
+          if (id.includes("recharts") || id.includes("d3-")) return "charts"
+          if (id.includes("jspdf") || id.includes("html2canvas") || id.includes("canvg")) {
+            return "pdf"
+          }
+          if (id.includes("xlsx")) return "xlsx"
+          if (
+            id.includes("react-dom") ||
+            id.includes("/react/") ||
+            id.includes("react-router") ||
+            id.includes("@tanstack")
+          ) {
+            return "vendor"
+          }
+          return undefined
+        },
+      },
+    },
   },
 });

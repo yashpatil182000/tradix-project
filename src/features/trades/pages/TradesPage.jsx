@@ -13,6 +13,11 @@ import { DeleteTradeDialog } from '@/features/trades/components/DeleteTradeDialo
 import { TradeList } from '@/features/trades/components/TradeList'
 import { useTrades } from '@/features/trades/hooks/useTrades'
 import { ConfigPagination } from '@/features/settings/components/ConfigToolbar'
+import {
+  ListPageSkeleton,
+  PageError,
+} from '@/components/shared/PageStates'
+import { Label } from '@/components/ui/label'
 import { ROUTES } from '@/routes/paths'
 
 const PAGE_SIZE = 10
@@ -66,48 +71,50 @@ export function TradesPage() {
       </div>
 
       <div className="mb-4 grid gap-3 sm:grid-cols-[1fr_180px]">
-        <Input
-          value={search}
-          onChange={(event) => {
-            setSearch(event.target.value)
-            setPage(1)
-          }}
-          placeholder="Search symbol, style, reason..."
-        />
-        <Select
-          value={status}
-          onValueChange={(value) => {
-            setStatus(value)
-            setPage(1)
-          }}
-        >
-          <SelectTrigger className="w-full">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All statuses</SelectItem>
-            <SelectItem value="open">Open</SelectItem>
-            <SelectItem value="closed">Closed</SelectItem>
-            <SelectItem value="cancelled">Cancelled</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="space-y-2">
+          <Label htmlFor="trade-search" className="sr-only">
+            Search trades
+          </Label>
+          <Input
+            id="trade-search"
+            value={search}
+            onChange={(event) => {
+              setSearch(event.target.value)
+              setPage(1)
+            }}
+            placeholder="Search symbol, style, reason..."
+            aria-label="Search trades"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label className="sr-only">Filter by status</Label>
+          <Select
+            value={status}
+            onValueChange={(value) => {
+              setStatus(value)
+              setPage(1)
+            }}
+          >
+            <SelectTrigger className="w-full" aria-label="Filter by status">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All statuses</SelectItem>
+              <SelectItem value="open">Open</SelectItem>
+              <SelectItem value="closed">Closed</SelectItem>
+              <SelectItem value="cancelled">Cancelled</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
-      {isLoading ? (
-        <div className="rounded-card border border-border px-4 py-12 text-center text-sm text-muted-foreground">
-          Loading trades...
-        </div>
-      ) : null}
+      {isLoading ? <ListPageSkeleton className="px-0 py-0" /> : null}
 
       {isError ? (
-        <div className="rounded-card border border-destructive/30 px-4 py-8 text-center">
-          <p className="text-sm text-destructive">
-            {error?.message || 'Failed to load trades'}
-          </p>
-          <Button type="button" variant="outline" className="mt-4" onClick={() => refetch()}>
-            Try again
-          </Button>
-        </div>
+        <PageError
+          message={error?.message || 'Failed to load trades'}
+          onRetry={() => refetch()}
+        />
       ) : null}
 
       {!isLoading && !isError ? (

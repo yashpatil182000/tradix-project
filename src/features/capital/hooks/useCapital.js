@@ -5,6 +5,7 @@ import {
   getCapitalEntries,
 } from '@/features/capital/api/capitalApi'
 import { buildCapitalSummary } from '@/services/capitalServices'
+import { invalidateCapitalRelatedQueries } from '@/lib/queryInvalidation'
 
 export const capitalKeys = {
   all: ['capital'],
@@ -35,9 +36,7 @@ export function useCreateCapitalEntry() {
     mutationFn: createCapitalEntry,
     onSuccess: () => {
       toast.success('Transaction added')
-      queryClient.invalidateQueries({ queryKey: capitalKeys.lists() })
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
-      queryClient.invalidateQueries({ queryKey: ['analytics'] })
+      invalidateCapitalRelatedQueries(queryClient)
     },
     onError: (error) => {
       toast.error(error.message || 'Unable to add transaction')

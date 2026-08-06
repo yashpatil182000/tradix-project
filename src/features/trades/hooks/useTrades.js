@@ -7,7 +7,7 @@ import {
   getTrades,
   updateTrade,
 } from '@/features/trades/api/tradesApi'
-import { capitalKeys } from '@/features/capital/hooks/useCapital'
+import { invalidateTradeRelatedQueries } from '@/lib/queryInvalidation'
 
 export const tradeKeys = {
   all: ['trades'],
@@ -32,17 +32,6 @@ export function useTrade(id) {
   })
 }
 
-function invalidateTradeQueries(queryClient, id) {
-  queryClient.invalidateQueries({ queryKey: tradeKeys.lists() })
-  queryClient.invalidateQueries({ queryKey: capitalKeys.lists() })
-  queryClient.invalidateQueries({ queryKey: ['dashboard'] })
-  queryClient.invalidateQueries({ queryKey: ['analytics'] })
-  queryClient.invalidateQueries({ queryKey: ['reports'] })
-  if (id) {
-    queryClient.invalidateQueries({ queryKey: tradeKeys.detail(id) })
-  }
-}
-
 export function useCreateTrade() {
   const queryClient = useQueryClient()
 
@@ -50,7 +39,7 @@ export function useCreateTrade() {
     mutationFn: ({ payload, files }) => createTrade(payload, files),
     onSuccess: () => {
       toast.success('Trade created')
-      invalidateTradeQueries(queryClient)
+      invalidateTradeRelatedQueries(queryClient)
     },
     onError: (error) => {
       toast.error(error.message || 'Unable to create trade')
@@ -65,7 +54,7 @@ export function useUpdateTrade() {
     mutationFn: ({ id, payload, files }) => updateTrade(id, payload, files),
     onSuccess: (data) => {
       toast.success('Trade updated')
-      invalidateTradeQueries(queryClient, data?.id)
+      invalidateTradeRelatedQueries(queryClient, data?.id)
     },
     onError: (error) => {
       toast.error(error.message || 'Unable to update trade')
@@ -80,7 +69,7 @@ export function useDeleteTrade() {
     mutationFn: deleteTrade,
     onSuccess: () => {
       toast.success('Trade deleted')
-      invalidateTradeQueries(queryClient)
+      invalidateTradeRelatedQueries(queryClient)
     },
     onError: (error) => {
       toast.error(error.message || 'Unable to delete trade')

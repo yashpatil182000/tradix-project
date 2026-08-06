@@ -28,7 +28,11 @@ export function ImageAttachmentField({
           <img
             src={previewUrl}
             alt={`${label} preview`}
-            className="max-h-48 w-full rounded-card border border-border object-cover"
+            width={800}
+            height={450}
+            loading="lazy"
+            decoding="async"
+            className="aspect-video max-h-48 w-full rounded-card border border-border object-cover"
           />
           <Button
             type="button"

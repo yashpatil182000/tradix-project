@@ -33,11 +33,13 @@ export function LotSelector({
     <div className={cn('space-y-2', className)}>
       <div className="flex items-center justify-between gap-3">
         <Label htmlFor={id}>Position size</Label>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1" role="group" aria-label="Lot step presets">
           {[0.01, 0.1, 1].map((item) => (
             <button
               key={item}
               type="button"
+              aria-pressed={Number(step) === item}
+              aria-label={`Set lot step to ${item}`}
               onClick={() => onConfigChange?.({ step: item })}
               className={cn(
                 'h-8 rounded-control px-2 text-caption font-medium',
@@ -72,6 +74,8 @@ export function LotSelector({
           max={max}
           enterKeyHint="next"
           data-focus-name="quantity"
+          aria-invalid={Boolean(error)}
+          aria-describedby={error ? `${id}-error` : undefined}
           className="h-11 scroll-mt-28 text-center text-base tabular-nums md:text-sm"
           value={value ?? ''}
           onChange={(event) => onChange(event.target.value)}
@@ -102,6 +106,7 @@ export function LotSelector({
             min="0.01"
             step="0.01"
             className="h-9"
+            aria-label="Lot step size"
             value={step}
             onChange={(event) => {
               const next = Number(event.target.value)
@@ -117,6 +122,7 @@ export function LotSelector({
             min="0.01"
             step="0.01"
             className="h-9"
+            aria-label="Minimum lot"
             value={min}
             onChange={(event) => {
               const next = Number(event.target.value)
@@ -132,6 +138,7 @@ export function LotSelector({
             min="0.01"
             step="0.01"
             className="h-9"
+            aria-label="Maximum lot"
             value={max}
             onChange={(event) => {
               const next = Number(event.target.value)
@@ -141,7 +148,11 @@ export function LotSelector({
         </label>
       </div>
 
-      {error ? <p className="text-sm text-destructive">{error}</p> : null}
+      {error ? (
+        <p id={`${id}-error`} className="text-sm text-destructive" role="alert">
+          {error}
+        </p>
+      ) : null}
     </div>
   )
 }
