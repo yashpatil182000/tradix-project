@@ -1,5 +1,16 @@
 import { Link, NavLink, Outlet } from "react-router-dom";
-import { CircleUserRound, LogOut, PanelLeft } from "lucide-react";
+import {
+  BarChart3,
+  BookOpen,
+  CircleUserRound,
+  FileText,
+  LayoutDashboard,
+  LogOut,
+  PanelLeft,
+  Settings,
+  Shapes,
+  Wallet,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -9,6 +20,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { SkipLink } from "@/components/shared/PageStates";
 import { ThemeToggle } from "@/components/shared/ThemeToggle";
 import { TradixLogo } from "@/components/shared/TradixLogo";
@@ -24,13 +40,13 @@ import { ROUTES } from "@/routes/paths";
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { to: ROUTES.DASHBOARD, label: "Home" },
-  { to: ROUTES.TRADE_JOURNAL, label: "Journal" },
-  { to: ROUTES.ANALYTICS, label: "Analytics" },
-  { to: ROUTES.REPORTS, label: "Reports" },
-  { to: ROUTES.CAPITAL, label: "Capital" },
-  { to: ROUTES.INSTRUMENTS, label: "Instruments" },
-  { to: ROUTES.SETTINGS, label: "Settings" },
+  { to: ROUTES.DASHBOARD, label: "Home", icon: LayoutDashboard },
+  { to: ROUTES.TRADE_JOURNAL, label: "Journal", icon: BookOpen },
+  { to: ROUTES.ANALYTICS, label: "Analytics", icon: BarChart3 },
+  { to: ROUTES.REPORTS, label: "Reports", icon: FileText },
+  { to: ROUTES.CAPITAL, label: "Capital", icon: Wallet },
+  { to: ROUTES.INSTRUMENTS, label: "Instruments", icon: Shapes },
+  { to: ROUTES.SETTINGS, label: "Settings", icon: Settings },
 ];
 
 function SidebarBrand() {
@@ -54,29 +70,45 @@ function SidebarBrand() {
   );
 }
 
+function SidebarNavItem({ item, collapsed }) {
+  const Icon = item.icon;
+
+  const link = (
+    <NavLink
+      to={item.to}
+      data-nav-item="true"
+      aria-label={item.label}
+      className={cn(
+        "flex items-center rounded-control px-3 py-2 text-sm font-medium transition-colors",
+        collapsed ? "justify-center px-0" : "gap-2.5",
+      )}
+    >
+      <Icon className="size-4 shrink-0" aria-hidden="true" />
+      {!collapsed ? <span>{item.label}</span> : null}
+    </NavLink>
+  );
+
+  if (!collapsed) {
+    return link;
+  }
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{link}</TooltipTrigger>
+      <TooltipContent side="right" sideOffset={8}>
+        {item.label}
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
 function SidebarNav() {
   const { collapsed } = useSidebar();
 
   return (
     <nav className="flex flex-1 flex-col gap-1 p-2" aria-label="Primary">
       {navItems.map((item) => (
-        <NavLink
-          key={item.to}
-          to={item.to}
-          data-nav-item="true"
-          aria-label={item.label}
-          title={item.label}
-          className={cn(
-            "rounded-control px-3 py-2 text-sm font-medium transition-colors",
-            collapsed && "px-0 text-center",
-          )}
-        >
-          {collapsed ? (
-            <span aria-hidden="true">{item.label.charAt(0)}</span>
-          ) : (
-            item.label
-          )}
-        </NavLink>
+        <SidebarNavItem key={item.to} item={item} collapsed={collapsed} />
       ))}
     </nav>
   );
