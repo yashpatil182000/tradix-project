@@ -302,6 +302,8 @@ export function AnalyticsCharts({
                 innerRadius={48}
                 outerRadius={72}
                 paddingAngle={3}
+                stroke="none"
+                strokeWidth={0}
               >
                 {tradeDistribution.map((entry) => (
                   <Cell key={entry.name} fill={entry.color} />

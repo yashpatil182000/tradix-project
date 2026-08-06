@@ -593,6 +593,17 @@
     outline: none !important;
     box-shadow: none !important;
   }
+
+  /* Subtle bar hover highlight (Recharts tooltip cursor) */
+  .recharts-rectangle.recharts-tooltip-cursor {
+    fill: color-mix(in oklab, var(--foreground) 6%, transparent) !important;
+    stroke: none !important;
+  }
+
+  /* Remove default white sector borders on pie charts */
+  .recharts-pie-sector {
+    stroke: none !important;
+  }
 }
 
 @media print {
