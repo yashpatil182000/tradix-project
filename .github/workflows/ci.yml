@@ -29,7 +29,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: site-build
-          path: out
+          path: dist
           retention-days: 1
 
   deploy-preview:
@@ -41,10 +41,10 @@ jobs:
         uses: actions/download-artifact@v7
         with:
           name: site-build
-          path: out
+          path: dist
 
       - name: Deploy to Netlify (preview)
-        run: npx netlify-cli deploy --dir=out --json
+        run: npx netlify-cli deploy --dir=dist --json
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
@@ -58,10 +58,10 @@ jobs:
         uses: actions/download-artifact@v7
         with:
           name: site-build
-          path: out
+          path: dist
 
       - name: Deploy to Netlify (production)
-        run: npx netlify-cli deploy --dir=out --prod --json
+        run: npx netlify-cli deploy --dir=dist --prod --json
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
