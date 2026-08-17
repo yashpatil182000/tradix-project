@@ -4,7 +4,6 @@ import {
   Frown,
   LogIn,
   LogOut,
-  Scale,
   TriangleAlert,
 } from 'lucide-react'
 
@@ -69,16 +68,6 @@ export const CONFIG_CATEGORIES = [
     storage: 'preferences',
     icon: TriangleAlert,
     supportsValue: false,
-  },
-  {
-    key: 'position_sizes',
-    path: 'position-sizes',
-    label: 'Position Sizes',
-    singularLabel: 'Position Size',
-    description: 'Reusable position size presets.',
-    storage: 'preferences',
-    icon: Scale,
-    supportsValue: true,
   },
 ]
 

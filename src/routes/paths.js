@@ -16,5 +16,4 @@ export const ROUTES = {
   SETTINGS_TIMEFRAMES: '/settings/timeframes',
   SETTINGS_EMOTIONS: '/settings/emotions',
   SETTINGS_MISTAKES: '/settings/mistakes',
-  SETTINGS_POSITION_SIZES: '/settings/position-sizes',
 }

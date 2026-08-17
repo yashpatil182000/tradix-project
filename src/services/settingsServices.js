@@ -6,7 +6,6 @@ const EMPTY_PREFERENCES = {
   timeframes: [],
   emotions: [],
   mistakes: [],
-  position_sizes: [],
 }
 
 async function getAuthUser() {
@@ -52,16 +51,23 @@ async function ensureUserProfile(user) {
   }
 }
 
+function stripUnsupportedPreferences(preferences = {}) {
+  const cleaned = { ...preferences }
+  delete cleaned.position_sizes
+  return cleaned
+}
+
 function normalizePreferences(preferences = {}) {
+  const cleaned = stripUnsupportedPreferences(preferences)
+
   return {
     ...EMPTY_PREFERENCES,
-    ...preferences,
-    entry_reasons: preferences.entry_reasons ?? [],
-    exit_reasons: preferences.exit_reasons ?? [],
-    timeframes: preferences.timeframes ?? [],
-    emotions: preferences.emotions ?? [],
-    mistakes: preferences.mistakes ?? [],
-    position_sizes: preferences.position_sizes ?? [],
+    ...cleaned,
+    entry_reasons: cleaned.entry_reasons ?? [],
+    exit_reasons: cleaned.exit_reasons ?? [],
+    timeframes: cleaned.timeframes ?? [],
+    emotions: cleaned.emotions ?? [],
+    mistakes: cleaned.mistakes ?? [],
   }
 }
 
@@ -109,9 +115,14 @@ export async function updateSettings(payload) {
   const user = await getAuthUser()
   await ensureUserProfile(user)
 
+  const nextPayload = { ...payload }
+  if (nextPayload.preferences) {
+    nextPayload.preferences = normalizePreferences(nextPayload.preferences)
+  }
+
   const { data, error } = await supabase
     .from('user_options')
-    .update(payload)
+    .update(nextPayload)
     .eq('user_id', user.id)
     .select('*')
     .single()
