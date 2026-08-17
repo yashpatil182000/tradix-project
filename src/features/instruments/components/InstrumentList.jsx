@@ -30,13 +30,15 @@ export function InstrumentList({
   instruments,
   onToggle,
   togglingId = null,
+  emptyTitle = 'No instruments found',
+  emptyDescription = 'Try a different search, or check back when more markets are added.',
 }) {
   if (!instruments.length) {
     return (
       <div className="rounded-xl border border-dashed px-4 py-12 text-center">
-        <p className="text-sm font-medium">No instruments found</p>
+        <p className="text-sm font-medium">{emptyTitle}</p>
         <p className="mt-1 text-sm text-muted-foreground">
-          Try a different search, or check back when more markets are added.
+          {emptyDescription}
         </p>
       </div>
     )

@@ -38,7 +38,7 @@ export function CreateConfigOptionDialog({
         <DialogHeader>
           <DialogTitle>Create {singularLabel || categoryLabel}</DialogTitle>
           <DialogDescription>
-            Add a reusable option for your journal configuration.
+            Add your own option. If it matches a catalog item, that item is enabled instead.
           </DialogDescription>
         </DialogHeader>
         <ConfigOptionForm
