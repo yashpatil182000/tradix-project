@@ -45,7 +45,6 @@ const navItems = [
   { to: ROUTES.ANALYTICS, label: "Analytics", icon: BarChart3 },
   { to: ROUTES.REPORTS, label: "Reports", icon: FileText },
   { to: ROUTES.CAPITAL, label: "Capital", icon: Wallet },
-  { to: ROUTES.INSTRUMENTS, label: "Instruments", icon: Shapes },
   { to: ROUTES.SETTINGS, label: "Settings", icon: Settings },
 ];
 
@@ -157,10 +156,7 @@ function HeaderActions() {
               </p>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem
-              variant="destructive"
-              onSelect={() => logout()}
-            >
+            <DropdownMenuItem variant="destructive" onSelect={() => logout()}>
               <LogOut className="size-4" />
               Log out
             </DropdownMenuItem>

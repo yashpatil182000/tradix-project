@@ -497,3 +497,9 @@ insert into public.master_instruments (
   ('GOOGL', 'Alphabet Inc.', 'stocks', 1, 0.01, 2, 1, 1, 10000, true),
   ('META', 'Meta Platforms Inc.', 'stocks', 1, 0.01, 2, 1, 1, 10000, true)
 on conflict (symbol) do nothing;
+
+-- =============================================================================
+-- Master config catalogs (entry/exit reasons, timeframes, emotions, mistakes)
+-- Full create + seed lives in supabase/migrations/master_config_options.sql
+-- =============================================================================
+

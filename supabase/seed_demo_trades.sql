@@ -87,13 +87,6 @@ begin
       jsonb_build_object('id', gen_random_uuid()::text, 'label', 'Ignored Plan', 'value', null, 'is_active', true, 'description', null, 'created_at', now(), 'updated_at', now()),
       jsonb_build_object('id', gen_random_uuid()::text, 'label', 'Overtrading', 'value', null, 'is_active', true, 'description', null, 'created_at', now(), 'updated_at', now()),
       jsonb_build_object('id', gen_random_uuid()::text, 'label', 'Held Too Long', 'value', null, 'is_active', true, 'description', null, 'created_at', now(), 'updated_at', now())
-    ),
-    'position_sizes', jsonb_build_array(
-      jsonb_build_object('id', gen_random_uuid()::text, 'label', 'Micro 0.01', 'value', '0.01', 'is_active', true, 'description', null, 'created_at', now(), 'updated_at', now()),
-      jsonb_build_object('id', gen_random_uuid()::text, 'label', 'Small 0.05', 'value', '0.05', 'is_active', true, 'description', null, 'created_at', now(), 'updated_at', now()),
-      jsonb_build_object('id', gen_random_uuid()::text, 'label', 'Standard 0.10', 'value', '0.10', 'is_active', true, 'description', null, 'created_at', now(), 'updated_at', now()),
-      jsonb_build_object('id', gen_random_uuid()::text, 'label', 'Medium 0.25', 'value', '0.25', 'is_active', true, 'description', null, 'created_at', now(), 'updated_at', now()),
-      jsonb_build_object('id', gen_random_uuid()::text, 'label', 'Large 0.50', 'value', '0.50', 'is_active', true, 'description', null, 'created_at', now(), 'updated_at', now())
     )
   );
 

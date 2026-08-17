@@ -18,6 +18,7 @@ import {
   ASSET_CLASSES,
   ASSET_CLASS_LABELS,
 } from '@/features/instruments/schemas/instrumentSchemas'
+import { ConfigSourceTabs } from '@/features/settings/components/ConfigSourceTabs'
 import { ConfigPagination } from '@/features/settings/components/ConfigToolbar'
 import { CONFIG_PAGE_SIZE } from '@/features/settings/constants/configCategories'
 
@@ -25,15 +26,22 @@ export function SettingsInstrumentsPage() {
   const { data: instruments = [], isLoading, isError, error, refetch } =
     useMasterInstrumentsCatalog()
   const setEnabled = useSetInstrumentEnabled()
+  const [tab, setTab] = useState('yours')
   const [search, setSearch] = useState('')
   const [assetClass, setAssetClass] = useState('all')
   const [page, setPage] = useState(1)
   const [togglingId, setTogglingId] = useState(null)
 
+  const yoursInstruments = useMemo(
+    () => instruments.filter((instrument) => instrument.is_enabled === true),
+    [instruments],
+  )
+  const sourceInstruments = tab === 'yours' ? yoursInstruments : instruments
+
   const filteredInstruments = useMemo(() => {
     const query = search.trim().toLowerCase()
 
-    return instruments.filter((instrument) => {
+    return sourceInstruments.filter((instrument) => {
       if (assetClass !== 'all' && instrument.asset_class !== assetClass) {
         return false
       }
@@ -52,7 +60,7 @@ export function SettingsInstrumentsPage() {
 
       return haystack.includes(query)
     })
-  }, [assetClass, instruments, search])
+  }, [assetClass, search, sourceInstruments])
 
   const totalPages = Math.max(
     1,
@@ -89,7 +97,7 @@ export function SettingsInstrumentsPage() {
       <div className="mb-6">
         <h1 className="text-heading-2">Instruments</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Browse markets and enable the symbols you trade. Only enabled
+          Your enabled symbols, plus the full master catalog. Only enabled
           instruments appear in the Trade Journal.
         </p>
       </div>
@@ -127,6 +135,18 @@ export function SettingsInstrumentsPage() {
         </Select>
       </div>
 
+      <ConfigSourceTabs
+        value={tab}
+        onValueChange={(value) => {
+          setTab(value)
+          setPage(1)
+        }}
+        yoursLabel="Your instruments"
+        catalogLabel="Master catalog"
+        yoursCount={yoursInstruments.length}
+        catalogCount={instruments.length}
+      />
+
       {isLoading ? (
         <div className="rounded-card border border-border px-4 py-12 text-center text-sm text-muted-foreground">
           Loading instruments...
@@ -155,6 +175,16 @@ export function SettingsInstrumentsPage() {
             instruments={paginatedInstruments}
             onToggle={handleToggle}
             togglingId={togglingId}
+            emptyTitle={
+              tab === 'yours'
+                ? 'No instruments enabled'
+                : 'No instruments found'
+            }
+            emptyDescription={
+              tab === 'yours'
+                ? 'Enable symbols from the Master catalog to see them here.'
+                : 'Try a different search, or check back when more markets are added.'
+            }
           />
           <ConfigPagination
             page={currentPage}
