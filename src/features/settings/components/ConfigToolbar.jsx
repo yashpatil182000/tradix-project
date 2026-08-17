@@ -67,6 +67,7 @@ export function ConfigToolbar({
   onSearchChange,
   onCreate,
   createLabel,
+  searchPlaceholder = 'Search...',
 }) {
   return (
     <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -74,15 +75,17 @@ export function ConfigToolbar({
         <Input
           value={search}
           onChange={(event) => onSearchChange(event.target.value)}
-          placeholder="Search..."
+          placeholder={searchPlaceholder}
           aria-label="Search configuration items"
         />
       </div>
-      <div className="sm:ml-auto">
-        <Button type="button" onClick={onCreate}>
-          {createLabel}
-        </Button>
-      </div>
+      {onCreate ? (
+        <div className="sm:ml-auto">
+          <Button type="button" onClick={onCreate}>
+            {createLabel}
+          </Button>
+        </div>
+      ) : null}
     </div>
   )
 }

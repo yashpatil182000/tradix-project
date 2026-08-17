@@ -1,4 +1,11 @@
 import { supabase, handleSupabaseError } from './api'
+import {
+  CONFIG_CATALOG_KEYS,
+  createCustomConfigOption,
+  deleteCustomConfigOption,
+  getAllEnabledConfigPreferences,
+  updateCustomConfigOption,
+} from './configCatalogServices'
 
 const EMPTY_PREFERENCES = {
   entry_reasons: [],
@@ -71,6 +78,18 @@ function normalizePreferences(preferences = {}) {
   }
 }
 
+async function withCatalogPreferences(settingsRow) {
+  const catalogPreferences = await getAllEnabledConfigPreferences()
+
+  return {
+    ...settingsRow,
+    preferences: normalizePreferences({
+      ...settingsRow.preferences,
+      ...catalogPreferences,
+    }),
+  }
+}
+
 export async function getSettings() {
   const user = await getAuthUser()
   await ensureUserProfile(user)
@@ -99,16 +118,10 @@ export async function getSettings() {
       handleSupabaseError(createError)
     }
 
-    return {
-      ...created,
-      preferences: normalizePreferences(created.preferences),
-    }
+    return withCatalogPreferences(created)
   }
 
-  return {
-    ...data,
-    preferences: normalizePreferences(data.preferences),
-  }
+  return withCatalogPreferences(data)
 }
 
 export async function updateSettings(payload) {
@@ -131,10 +144,7 @@ export async function updateSettings(payload) {
     handleSupabaseError(error)
   }
 
-  return {
-    ...data,
-    preferences: normalizePreferences(data.preferences),
-  }
+  return withCatalogPreferences(data)
 }
 
 export async function getConfigOptions(categoryKey) {
@@ -143,77 +153,41 @@ export async function getConfigOptions(categoryKey) {
 }
 
 export async function createConfigOption(categoryKey, option) {
+  if (!CONFIG_CATALOG_KEYS.includes(categoryKey)) {
+    throw new Error('Unknown configuration category')
+  }
+
+  const created = await createCustomConfigOption(categoryKey, option)
   const settings = await getSettings()
-  const current = settings.preferences[categoryKey] ?? []
-
-  const nextOption = {
-    id: crypto.randomUUID(),
-    label: option.label.trim(),
-    description: option.description?.trim() || null,
-    value: option.value?.trim?.() ? option.value.trim() : option.value ?? null,
-    is_active: option.is_active ?? true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  }
-
-  const preferences = {
-    ...settings.preferences,
-    [categoryKey]: [...current, nextOption],
-  }
-
-  const updated = await updateSettings({ preferences })
   return {
-    option: nextOption,
-    settings: updated,
+    option: created,
+    settings,
   }
 }
 
 export async function updateConfigOption(categoryKey, id, option) {
+  if (!CONFIG_CATALOG_KEYS.includes(categoryKey)) {
+    throw new Error('Unknown configuration category')
+  }
+
+  const updatedOption = await updateCustomConfigOption(categoryKey, id, option)
   const settings = await getSettings()
-  const current = settings.preferences[categoryKey] ?? []
-  const index = current.findIndex((item) => item.id === id)
-
-  if (index === -1) {
-    throw new Error('Configuration item not found')
-  }
-
-  const nextOption = {
-    ...current[index],
-    label: option.label.trim(),
-    description: option.description?.trim() || null,
-    value: option.value?.trim?.() ? option.value.trim() : option.value ?? null,
-    is_active: option.is_active ?? true,
-    updated_at: new Date().toISOString(),
-  }
-
-  const nextList = [...current]
-  nextList[index] = nextOption
-
-  const preferences = {
-    ...settings.preferences,
-    [categoryKey]: nextList,
-  }
-
-  const updated = await updateSettings({ preferences })
   return {
-    option: nextOption,
-    settings: updated,
+    option: updatedOption,
+    settings,
   }
 }
 
 export async function deleteConfigOption(categoryKey, id) {
-  const settings = await getSettings()
-  const current = settings.preferences[categoryKey] ?? []
-
-  const preferences = {
-    ...settings.preferences,
-    [categoryKey]: current.filter((item) => item.id !== id),
+  if (!CONFIG_CATALOG_KEYS.includes(categoryKey)) {
+    throw new Error('Unknown configuration category')
   }
 
-  const updated = await updateSettings({ preferences })
+  await deleteCustomConfigOption(categoryKey, id)
+  const settings = await getSettings()
   return {
     id,
-    settings: updated,
+    settings,
   }
 }
 

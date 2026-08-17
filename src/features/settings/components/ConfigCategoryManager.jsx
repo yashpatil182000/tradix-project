@@ -1,38 +1,46 @@
 import { useMemo, useState } from 'react'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { ConfigOptionList } from '@/features/settings/components/ConfigOptionList'
+import { ConfigSourceTabs } from '@/features/settings/components/ConfigSourceTabs'
 import { ConfigPagination, ConfigToolbar } from '@/features/settings/components/ConfigToolbar'
 import { CreateConfigOptionDialog } from '@/features/settings/components/CreateConfigOptionDialog'
 import { DeleteConfigOptionDialog } from '@/features/settings/components/DeleteConfigOptionDialog'
 import { EditConfigOptionDialog } from '@/features/settings/components/EditConfigOptionDialog'
 import { CONFIG_PAGE_SIZE } from '@/features/settings/constants/configCategories'
-import { useConfigOptions } from '@/features/settings/hooks/useSettings'
+import {
+  useMasterConfigCatalog,
+  useSetConfigOptionEnabled,
+  useYourConfigOptions,
+} from '@/features/settings/hooks/useSettings'
+
+function matchesSearch(item, query) {
+  if (!query) return true
+  const haystack = [item.label, item.description].filter(Boolean).join(' ').toLowerCase()
+  return haystack.includes(query)
+}
 
 export function ConfigCategoryManager({ category }) {
-  const { data: items = [], isLoading, isError, error, refetch } =
-    useConfigOptions(category.key)
+  const yoursQuery = useYourConfigOptions(category.key)
+  const catalogQuery = useMasterConfigCatalog(category.key)
+  const setEnabled = useSetConfigOptionEnabled(category.key)
+  const [tab, setTab] = useState('yours')
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [editingItem, setEditingItem] = useState(null)
   const [deletingItem, setDeletingItem] = useState(null)
+  const [togglingId, setTogglingId] = useState(null)
+
+  const yoursItems = yoursQuery.data ?? []
+  const catalogItems = catalogQuery.data ?? []
+  const isYours = tab === 'yours'
+  const query = isYours ? yoursQuery : catalogQuery
+  const items = isYours ? yoursItems : catalogItems
 
   const filteredItems = useMemo(() => {
-    const query = search.trim().toLowerCase()
-    if (!query) return items
-
-    return items.filter((item) => {
-      const haystack = [
-        item.label,
-        item.description,
-        item.value,
-      ]
-        .filter(Boolean)
-        .join(' ')
-        .toLowerCase()
-
-      return haystack.includes(query)
-    })
+    const q = search.trim().toLowerCase()
+    return items.filter((item) => matchesSearch(item, q))
   }, [items, search])
 
   const totalPages = Math.max(1, Math.ceil(filteredItems.length / CONFIG_PAGE_SIZE))
@@ -47,6 +55,25 @@ export function ConfigCategoryManager({ category }) {
     setPage(1)
   }
 
+  function handleTabChange(value) {
+    setTab(value)
+    setPage(1)
+  }
+
+  async function handleToggle(item, isEnabled) {
+    const masterId = item.master_id || item.id
+    setTogglingId(masterId)
+
+    try {
+      await setEnabled.mutateAsync({ masterId, isEnabled })
+      toast.success(isEnabled ? `${item.label} enabled` : `${item.label} disabled`)
+    } catch (toggleError) {
+      toast.error(toggleError.message || 'Unable to update item')
+    } finally {
+      setTogglingId(null)
+    }
+  }
+
   return (
     <div>
       <div className="mb-6">
@@ -59,39 +86,61 @@ export function ConfigCategoryManager({ category }) {
       <ConfigToolbar
         search={search}
         onSearchChange={handleSearchChange}
-        onCreate={() => setIsCreateOpen(true)}
-        createLabel={`Add ${category.singularLabel.toLowerCase()}`}
+        onCreate={isYours ? () => setIsCreateOpen(true) : undefined}
+        createLabel={`Add custom ${category.singularLabel.toLowerCase()}`}
+        searchPlaceholder={`Search ${category.label.toLowerCase()}...`}
       />
 
-      {isLoading ? (
+      <ConfigSourceTabs
+        value={tab}
+        onValueChange={handleTabChange}
+        yoursLabel={`Your ${category.label.toLowerCase()}`}
+        catalogLabel="Master catalog"
+        yoursCount={yoursItems.length}
+        catalogCount={catalogItems.length}
+      />
+
+      {query.isLoading ? (
         <div className="rounded-card border border-border px-4 py-12 text-center text-sm text-muted-foreground">
           Loading {category.label.toLowerCase()}...
         </div>
       ) : null}
 
-      {isError ? (
+      {query.isError ? (
         <div className="rounded-card border border-destructive/30 px-4 py-8 text-center">
           <p className="text-sm text-destructive">
-            {error?.message || `Failed to load ${category.label.toLowerCase()}`}
+            {query.error?.message || `Failed to load ${category.label.toLowerCase()}`}
           </p>
           <Button
             type="button"
             variant="outline"
             className="mt-4"
-            onClick={() => refetch()}
+            onClick={() => query.refetch()}
           >
             Try again
           </Button>
         </div>
       ) : null}
 
-      {!isLoading && !isError ? (
+      {!query.isLoading && !query.isError ? (
         <>
           <ConfigOptionList
             items={paginatedItems}
-            supportsValue={category.supportsValue}
+            mode={isYours ? 'yours' : 'catalog'}
+            togglingId={togglingId}
+            onToggle={handleToggle}
             onEdit={setEditingItem}
             onDelete={setDeletingItem}
+            emptyTitle={
+              isYours
+                ? `No ${category.label.toLowerCase()} enabled`
+                : 'No catalog items found'
+            }
+            emptyDescription={
+              isYours
+                ? 'Enable items from the Master catalog, or add your own.'
+                : 'Try a different search.'
+            }
           />
           <ConfigPagination
             page={currentPage}
@@ -105,14 +154,14 @@ export function ConfigCategoryManager({ category }) {
         categoryKey={category.key}
         categoryLabel={category.label}
         singularLabel={category.singularLabel}
-        supportsValue={category.supportsValue}
+        supportsValue={false}
         open={isCreateOpen}
         onOpenChange={setIsCreateOpen}
       />
 
       <EditConfigOptionDialog
         categoryKey={category.key}
-        supportsValue={category.supportsValue}
+        supportsValue={false}
         item={editingItem}
         open={Boolean(editingItem)}
         onOpenChange={(open) => {

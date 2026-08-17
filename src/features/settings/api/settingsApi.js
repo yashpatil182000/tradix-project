@@ -8,3 +8,9 @@ export {
   getProfile,
   updateProfile,
 } from '@/services/settingsServices'
+
+export {
+  getMasterConfigCatalog,
+  getYourConfigOptions,
+  setConfigOptionEnabled,
+} from '@/services/configCatalogServices'
