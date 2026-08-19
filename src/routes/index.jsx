@@ -3,9 +3,16 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import { PageSkeleton } from '@/components/shared/PageStates'
 import { AppLayout } from '@/layouts/AppLayout'
 import { AuthLayout } from '@/layouts/AuthLayout'
+import { LandingRoute } from '@/routes/LandingRoute'
 import { ProtectedRoute } from '@/routes/ProtectedRoute'
 import { PublicRoute } from '@/routes/PublicRoute'
 import { ROUTES } from '@/routes/paths'
+
+const LandingPage = lazy(() =>
+  import('@/pages/Landing/LandingPage').then((module) => ({
+    default: module.LandingPage,
+  })),
+)
 
 const LoginPage = lazy(() =>
   import('@/features/auth/pages/LoginPage').then((module) => ({
@@ -95,6 +102,17 @@ function LazyPage({ children }) {
 export function AppRoutes() {
   return (
     <Routes>
+      <Route element={<LandingRoute />}>
+        <Route
+          path={ROUTES.LANDING}
+          element={
+            <LazyPage>
+              <LandingPage />
+            </LazyPage>
+          }
+        />
+      </Route>
+
       <Route element={<AuthLayout />}>
         <Route element={<PublicRoute />}>
           <Route
@@ -241,8 +259,7 @@ export function AppRoutes() {
         </Route>
       </Route>
 
-      <Route path="/" element={<Navigate to={ROUTES.DASHBOARD} replace />} />
-      <Route path="*" element={<Navigate to={ROUTES.DASHBOARD} replace />} />
+      <Route path="*" element={<Navigate to={ROUTES.LANDING} replace />} />
     </Routes>
   )
 }
